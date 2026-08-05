@@ -31,7 +31,7 @@ public class StudentProfile {
     private String fullName;
 
     @Column(nullable = false, unique = true)
-    private String enrollmentno;
+    private String enrollmentNo;
 
     private String department;
 
