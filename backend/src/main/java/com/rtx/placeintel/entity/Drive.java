@@ -1,5 +1,8 @@
 package com.rtx.placeintel.entity;
 
+import com.rtx.placeintel.entity.enums.DriveStatus;
+import com.rtx.placeintel.entity.enums.EmploymentType;
+import com.rtx.placeintel.entity.enums.WorkMode;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -89,6 +92,9 @@ public class Drive {
 
     private LocalDate driveDate;
 
+    /*
+    * - mappedBy = "drive" :- It tells Hibernate --> "The Round entity already has a field called drive that manages this relationship."
+    * */
     @OneToMany(mappedBy = "drive", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sequenceNumber ASC")
     @Builder.Default

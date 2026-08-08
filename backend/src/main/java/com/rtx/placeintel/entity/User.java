@@ -1,5 +1,6 @@
 package com.rtx.placeintel.entity;
 
+import com.rtx.placeintel.entity.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

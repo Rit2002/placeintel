@@ -1,6 +1,6 @@
 package com.rtx.placeintel.security;
 
-import com.rtx.placeintel.entity.Role;
+import com.rtx.placeintel.entity.enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

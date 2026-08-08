@@ -2,7 +2,7 @@ package com.rtx.placeintel.service;
 
 import com.rtx.placeintel.dto.LoginRequest;
 import com.rtx.placeintel.dto.RegisterRequest;
-import com.rtx.placeintel.entity.Role;
+import com.rtx.placeintel.entity.enums.Role;
 import com.rtx.placeintel.entity.StudentProfile;
 import com.rtx.placeintel.entity.User;
 import com.rtx.placeintel.exception.UserAlreadyExistsException;
@@ -16,8 +16,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

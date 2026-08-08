@@ -1,5 +1,6 @@
 package com.rtx.placeintel.entity;
 
+import com.rtx.placeintel.entity.enums.CompanyType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -52,8 +53,8 @@ public class Company {
     private List<Resource> resources = new ArrayList<>();
 
     /*
-    * - A created_by_tpo_id column is produced.
-    * - Type "User" : Hibernate looks for User's primary key field and uses that type.
+    * - A "created_by_tpo_id" column is produced.
+    * - Type ("User" ): Hibernate looks for User's primary key field and uses that type.
     * */
     @ManyToOne
     @JoinColumn(name = "created_by_tpo_id", nullable = false)

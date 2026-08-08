@@ -1,5 +1,6 @@
 package com.rtx.placeintel.entity;
 
+import com.rtx.placeintel.entity.enums.RoundDifficulty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

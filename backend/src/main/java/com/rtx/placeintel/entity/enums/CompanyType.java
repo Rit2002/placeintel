@@ -1,4 +1,4 @@
-package com.rtx.placeintel.entity;
+package com.rtx.placeintel.entity.enums;
 
 public enum CompanyType {
     PRODUCT_BASED,
