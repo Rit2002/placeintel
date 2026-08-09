@@ -34,11 +34,13 @@ public class GlobalExceptionHandler {
                 .body("Something went wrong.");
     }
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<?> handleUserAlreadyExists(UserAlreadyExistsException ex) {
+
+    @ExceptionHandler({UserAlreadyExistsException.class, DuplicateResourceException.class})
+    public ResponseEntity<?> handleDuplicateResources(DuplicateResourceException ex) {
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ex.getMessage());
+
     }
 }

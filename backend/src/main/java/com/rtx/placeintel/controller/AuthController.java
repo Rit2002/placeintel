@@ -32,6 +32,7 @@ public class AuthController {
                 .httpOnly(true) // prevents client side js to access the cookie, mitigates XSS attack
                 .secure(false) // true : sends the cookie over https
                 .sameSite("Lax")
+                .path("/")
                 .maxAge(Duration.ofDays(30))
                 .build();
 
@@ -50,6 +51,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(false)
                 .sameSite("Lax")
+                .path("/")
                 .maxAge(Duration.ofDays(30))
                 .build();
 

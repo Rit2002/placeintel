@@ -66,8 +66,8 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalStateException("User not found"));
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        System.out.println("USER ROLE ---------> " + user.getRole());
 
-        return token;
+        return jwtUtil.generateToken(user.getEmail(), user.getRole());
     }
 }

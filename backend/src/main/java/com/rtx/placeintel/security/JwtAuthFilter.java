@@ -59,6 +59,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             //it registers this authentication token into Spring Security's SecurityContext for the current request thread. From this point forward, for the rest of this request's processing.
             SecurityContextHolder.getContext().setAuthentication(authToken);
+            System.out.println("Authorities set: " + authToken.getAuthorities());
 
         }
 
