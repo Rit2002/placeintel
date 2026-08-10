@@ -1,5 +1,6 @@
 package com.rtx.placeintel.exception;
 
+import com.rtx.placeintel.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,36 +12,88 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<String> handleBadCredentials(BadCredentialsException ex) {
+    public ResponseEntity<ApiResponse> handleBadCredentials(BadCredentialsException ex) {
+
+        ApiResponse response = new ApiResponse(
+                false,
+                "Something went wrong.",
+                null,
+                ex.getMessage()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
-                .body("Invalid credentials.");
+                .body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse> handleValidationException(MethodArgumentNotValidException ex) {
+
+
+        ApiResponse response = new ApiResponse(
+                false,
+                "Something went wrong.",
+                null,
+                ex.getMessage()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body("some fields missing.");
+                .body(response);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception ex) {
+    public ResponseEntity<ApiResponse> handleException(Exception ex) {
+
+        System.out.println("=============================================");
+        System.out.println(ex.getMessage());
+
+        ApiResponse response = new ApiResponse(
+                false,
+                "Something went wrong.",
+                null,
+                "INTERNAL_SERVER_ERROR"
+        );
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Something went wrong.");
+                .body(response);
     }
 
 
     @ExceptionHandler({UserAlreadyExistsException.class, DuplicateResourceException.class})
-    public ResponseEntity<?> handleDuplicateResources(DuplicateResourceException ex) {
+    public ResponseEntity<ApiResponse> handleDuplicateResources(DuplicateResourceException ex) {
+
+
+        ApiResponse response = new ApiResponse(
+                false,
+                "Something went wrong.",
+                null,
+                ex.getMessage()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(ex.getMessage());
+                .body(response);
 
     }
+
+
+    @ExceptionHandler
+    public ResponseEntity<ApiResponse> handleResourceNotFound(ResourceNotFound ex) {
+
+
+        ApiResponse response = new ApiResponse(
+                false,
+                "Something went wrong.",
+                null,
+                ex.getMessage()
+        );
+
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(response);
+    }
+
 }

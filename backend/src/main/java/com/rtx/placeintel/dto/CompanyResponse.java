@@ -9,7 +9,6 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 public class CompanyResponse {
-    private  String message;
-    private UUID id;
     private String name;
+    private UUID id;
 }
