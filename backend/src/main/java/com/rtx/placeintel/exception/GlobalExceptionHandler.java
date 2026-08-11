@@ -7,14 +7,39 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiResponse> handleBadCredentials(BadCredentialsException ex) {
 
-        ApiResponse response = new ApiResponse(
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+
+        String message = String.format(
+                "Invalid value '%s' for parameter '%s'",
+                ex.getValue(),
+                ex.getName(),
+                ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown"
+        );
+
+        ApiResponse<Void> response = new ApiResponse<>(
+                false,
+                "Something went wrong.",
+                null,
+                message
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentials(BadCredentialsException ex) {
+
+        ApiResponse<Void> response = new ApiResponse<>(
                 false,
                 "Something went wrong.",
                 null,
@@ -27,10 +52,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
 
 
-        ApiResponse response = new ApiResponse(
+        ApiResponse<Void> response = new ApiResponse<>(
                 false,
                 "Something went wrong.",
                 null,
@@ -43,12 +68,12 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse> handleException(Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
 
         System.out.println("=============================================");
         System.out.println(ex.getMessage());
 
-        ApiResponse response = new ApiResponse(
+        ApiResponse<Void> response = new ApiResponse<>(
                 false,
                 "Something went wrong.",
                 null,
@@ -62,10 +87,10 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler({UserAlreadyExistsException.class, DuplicateResourceException.class})
-    public ResponseEntity<ApiResponse> handleDuplicateResources(DuplicateResourceException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateResources(DuplicateResourceException ex) {
 
 
-        ApiResponse response = new ApiResponse(
+        ApiResponse<Void> response = new ApiResponse<>(
                 false,
                 "Something went wrong.",
                 null,
@@ -80,10 +105,10 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler
-    public ResponseEntity<ApiResponse> handleResourceNotFound(ResourceNotFound ex) {
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(ResourceNotFound ex) {
 
 
-        ApiResponse response = new ApiResponse(
+        ApiResponse<Void> response = new ApiResponse<>(
                 false,
                 "Something went wrong.",
                 null,

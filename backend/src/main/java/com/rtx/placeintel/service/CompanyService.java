@@ -10,9 +10,11 @@ import com.rtx.placeintel.exception.ResourceNotFound;
 import com.rtx.placeintel.repository.CompanyRepository;
 import com.rtx.placeintel.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Pageable;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -27,8 +29,8 @@ public class CompanyService {
     private final UserRepository userRepository;
 
 
-
-    public ApiResponse createCompany(CompanyRequest req, Authentication auth) {
+    // Register the company
+    public ApiResponse<CompanyResponse> createCompany(CompanyRequest req, Authentication auth) {
 
         if(companyRepository.existsByName(req.getName())) {
 
@@ -56,7 +58,7 @@ public class CompanyService {
                 saved.getId()
         );
 
-        return  new ApiResponse(
+        return  new ApiResponse<>(
                 true,
                 "Successfully created a company",
                 companyResponse,
@@ -65,8 +67,8 @@ public class CompanyService {
     }
 
 
-
-    public String deleteCompany(UUID companyId) {
+    // delete the company
+    public ApiResponse<Void> deleteCompany(UUID companyId) {
 
         if(!companyRepository.existsById(companyId)) {
 
@@ -75,11 +77,16 @@ public class CompanyService {
 
         companyRepository.deleteById(companyId);
 
-        return "Successfully deleted the company.";
+        return new ApiResponse<>(
+                true,
+                "Successfully deleted the company.",
+                null,
+                null
+        );
     }
 
-
-    public ApiResponse updateCompany(UUID companyId, CompanyRequest req) {
+    // Update the company
+    public ApiResponse<Void> updateCompany(UUID companyId, CompanyRequest req) {
 
 
         Company company = companyRepository.findById(companyId)
@@ -95,7 +102,7 @@ public class CompanyService {
 
         if(!changed) {
 
-            return new ApiResponse(
+            return new ApiResponse<>(
                     true,
                     "No change detected.",
                     null,
@@ -111,7 +118,7 @@ public class CompanyService {
 
         companyRepository.save(company);
 
-        return new ApiResponse(
+        return new ApiResponse<>(
                 true,
                 "Successfully updated the company",
                 null,
@@ -119,5 +126,36 @@ public class CompanyService {
         );
 
     }
+
+
+
+
+    // Fetch the company details
+    public ApiResponse<Company> fetchCompanyById(UUID companyId) {
+
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new ResourceNotFound("Company don't exists"));
+
+        return new ApiResponse<>(
+                true,
+                "Successfully fetched the company",
+                company,
+                null
+        );
+    }
+
+    // Fetch ALL companies
+    public ApiResponse<Page<Company>> fetchAllCompanies(Pageable pageable) {
+
+        Page<Company> companies = companyRepository.findAll(pageable);
+
+        return new ApiResponse<>(
+                true,
+                "Successfully fetched the company",
+                companies,
+                null
+        );
+    }
+
 
 }
