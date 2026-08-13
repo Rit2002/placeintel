@@ -1,8 +1,6 @@
 package com.rtx.placeintel.service;
 
-import com.rtx.placeintel.dto.ApiResponse;
-import com.rtx.placeintel.dto.DriveRequest;
-import com.rtx.placeintel.dto.RoundRequest;
+import com.rtx.placeintel.dto.*;
 import com.rtx.placeintel.entity.Company;
 import com.rtx.placeintel.entity.Drive;
 import com.rtx.placeintel.entity.Round;
@@ -57,15 +55,104 @@ public class DriveService {
 
         attachRounds(drive, req.rounds());
 
-        driveRepository.save(drive);
+        Drive saved = driveRepository.save(drive);
 
         String message = "Successfully created a company" + company.getName();
+
 
         return new ApiResponse<>(
                 true,
                 message,
+                saved.getId().toString(),
+                null
+        );
+    }
+
+
+
+    @Transactional
+    public ApiResponse<String> updateDrive(UUID driveId, DriveRequest req) {
+
+        Drive drive = driveRepository.findById(driveId)
+                .orElseThrow(() -> new ResourceNotFound("Drive don't exists"));
+
+
+        drive.setRoleOffered(req.roleOffered());
+        drive.setEmploymentType(req.employmentType());
+        drive.setWorkMode(req.workMode());
+        drive.setCtcOffered(req.ctcOffered());
+        drive.setStipend(req.stipend());
+        drive.setJobDescription(req.jobDescription());
+        drive.setRequiredSkills(req.requiredSkills());
+        drive.setEligibleDepartments(req.eligibleDepartments());
+        drive.setCutoffCgpa(req.cutOffCgpa());
+        drive.setCutOffTenthPercentage(req.cutOffTenthPercentage());
+        drive.setCutOffTwelfthPercentage(req.cutOffTwelfthPercentage());
+        drive.setMaxAllowedBacklogs(req.maxAllowedBacklogs());
+        drive.setDriveDate(req.driveDate());
+
+
+        Drive resp = driveRepository.save(drive);
+
+        return new ApiResponse<>(
+                true,
+                "Successfully updated the drive",
+                resp.getId().toString(),
+                null
+        );
+
+    }
+
+    @Transactional
+    public ApiResponse<String> deleteDrive(UUID driveId) {
+
+        if(!driveRepository.existsById(driveId)) {
+
+            throw new ResourceNotFound("Drive Not Found for given Id");
+        }
+
+        driveRepository.deleteById(driveId);
+
+        return new ApiResponse<>(
+                true,
+                "Successfully deleted the Drive.",
                 null,
                 null
+        );
+    }
+
+    public ApiResponse<DriveResponse> getDriveById(UUID driveId) {
+
+        Drive drive = driveRepository.findById(driveId)
+                .orElseThrow(() -> new ResourceNotFound("Drive not found."));
+
+
+        return new  ApiResponse<>(
+                true,
+                "Successfully fetched the drive.",
+                toResponse(drive),
+                null
+        );
+    }
+
+
+
+    // Helper methods
+    private DriveResponse toResponse(Drive drive) {
+        List<RoundResponse> roundResponses = drive.getRounds().stream()
+                .map(r -> new RoundResponse(
+                        r.getId(), r.getRoundName(), r.getSequenceNumber(),
+                        r.getDescription(), r.getDurationMinutes(), r.getDifficulty()))
+                .toList();
+
+        return new DriveResponse(
+                drive.getId(), drive.getCompany().getId(), drive.getCompany().getName(),
+                drive.getRoleOffered(), drive.getEmploymentType(), drive.getWorkMode(),
+                drive.getCtcOffered(), drive.getStipend(), drive.getJobDescription(),
+                drive.getRequiredSkills(), drive.getEligibleDepartments(), drive.getCutoffCgpa(),
+                drive.getCutOffTenthPercentage(), drive.getCutOffTwelfthPercentage(),
+                drive.getMaxAllowedBacklogs(), drive.getStatus(), drive.getDriveDate(),
+                roundResponses
         );
     }
 

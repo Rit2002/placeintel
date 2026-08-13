@@ -25,6 +25,21 @@ public class DriveController {
     private final UserRepository userRepository;
 
 
+
+
+    //------ Reads ( Any Authenticated user) -----
+
+    @GetMapping("/drive/{id}")
+    public ResponseEntity<ApiResponse<DriveResponse>> getDriveById(@PathVariable UUID id) {
+
+        ApiResponse<DriveResponse> response = driveService.getDriveById(id);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
+
+
     // ----- TPO-only writes ------
 
     @PostMapping("/drive/{companyId}")
@@ -42,6 +57,38 @@ public class DriveController {
                 .body(response);
     }
 
+
+
+
+    @PutMapping("/drive/update/{id}")
+    @PreAuthorize("hasRole('TPO')")
+    public ResponseEntity<ApiResponse<String>> updateDrive(@PathVariable UUID id,
+                                                           @Valid @RequestBody DriveRequest req) {
+
+        ApiResponse<String> response = driveService.updateDrive(id, req);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
+
+
+
+
+    @DeleteMapping("/drive/delete/{id}")
+    @PreAuthorize("hasRole('TPO')")
+    public ResponseEntity<ApiResponse<String>> deleteDrive(@PathVariable UUID id) {
+
+        ApiResponse<String> response = driveService.deleteDrive(id);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
+
+
+
+    // Helper method
     private User currentUser(Authentication auth) {
 
         String email = auth.getName();

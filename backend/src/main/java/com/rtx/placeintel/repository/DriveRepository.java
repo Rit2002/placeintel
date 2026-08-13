@@ -12,7 +12,6 @@ public interface DriveRepository extends JpaRepository<Drive, UUID> {
 
     boolean existsByCompanyIdAndDriveDate(UUID companyId, LocalDate driveDate);
 
-    List<Drive> findByCompanyId(UUID companyId);
 
-    List<Drive> findByStatus(DriveStatus status);
+    List<Drive> findByDriveDateBeforeAndStatusNot(LocalDate date, DriveStatus status);
 }

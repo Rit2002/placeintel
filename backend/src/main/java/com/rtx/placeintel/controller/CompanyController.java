@@ -1,6 +1,7 @@
 package com.rtx.placeintel.controller;
 
 import com.rtx.placeintel.dto.ApiResponse;
+import com.rtx.placeintel.dto.CompanyReference;
 import com.rtx.placeintel.dto.CompanyRequest;
 import com.rtx.placeintel.dto.CompanyResponse;
 import com.rtx.placeintel.entity.Company;
@@ -27,11 +28,11 @@ public class CompanyController {
 
     @PostMapping("/company/register")
     @PreAuthorize("hasRole('TPO')")
-    public ResponseEntity<ApiResponse<CompanyResponse>> createCompany(@Valid @RequestBody CompanyRequest req,
-                                                         Authentication authentication) {
+    public ResponseEntity<ApiResponse<CompanyReference>> createCompany(@Valid @RequestBody CompanyRequest req,
+                                                                       Authentication authentication) {
 
 
-        ApiResponse<CompanyResponse> response = companyService.createCompany(req, authentication);
+        ApiResponse<CompanyReference> response = companyService.createCompany(req, authentication);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -65,9 +66,9 @@ public class CompanyController {
 
 
     @GetMapping("/company/{id}")
-    public ResponseEntity<ApiResponse<Company>> getCompanyById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<CompanyResponse>> getCompanyById(@PathVariable UUID id) {
 
-        ApiResponse<Company> response = companyService.fetchCompanyById(id);
+        ApiResponse<CompanyResponse> response = companyService.fetchCompanyById(id);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

@@ -1,9 +1,9 @@
 package com.rtx.placeintel.service;
 
-import com.rtx.placeintel.dto.ApiResponse;
-import com.rtx.placeintel.dto.CompanyRequest;
-import com.rtx.placeintel.dto.CompanyResponse;
+import com.rtx.placeintel.dto.*;
 import com.rtx.placeintel.entity.Company;
+import com.rtx.placeintel.entity.Drive;
+import com.rtx.placeintel.entity.Round;
 import com.rtx.placeintel.entity.User;
 import com.rtx.placeintel.exception.DuplicateResourceException;
 import com.rtx.placeintel.exception.ResourceNotFound;
@@ -15,6 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -30,7 +32,7 @@ public class CompanyService {
 
 
     // Register the company
-    public ApiResponse<CompanyResponse> createCompany(CompanyRequest req, Authentication auth) {
+    public ApiResponse<CompanyReference> createCompany(CompanyRequest req, Authentication auth) {
 
         if(companyRepository.existsByName(req.getName())) {
 
@@ -53,9 +55,9 @@ public class CompanyService {
 
         Company saved = companyRepository.save(company);
 
-        CompanyResponse companyResponse = new CompanyResponse(
-                saved.getName(),
-                saved.getId()
+        CompanyReference companyResponse = new CompanyReference(
+                saved.getId(),
+                saved.getName()
         );
 
         return  new ApiResponse<>(
@@ -92,23 +94,6 @@ public class CompanyService {
         Company company = companyRepository.findById(companyId)
                         .orElseThrow(() -> new ResourceNotFound("Company don't exists"));
 
-        boolean changed =
-                !Objects.equals(company.getName(), req.getName()) ||
-                !Objects.equals(company.getLogoUrl(), req.getLogoUrl()) ||
-                !Objects.equals(company.getShortDescription(), req.getShortDescription()) ||
-                !Objects.equals(company.getBusinessInfo(), req.getBusinessInfo()) ||
-                !Objects.equals(company.getCompanyType(), req.getCompanyType());
-
-
-        if(!changed) {
-
-            return new ApiResponse<>(
-                    true,
-                    "No change detected.",
-                    null,
-                    null
-            );
-        }
 
         company.setName(req.getName());
         company.setLogoUrl(req.getLogoUrl());
@@ -131,18 +116,43 @@ public class CompanyService {
 
 
     // Fetch the company details
-    public ApiResponse<Company> fetchCompanyById(UUID companyId) {
+    public ApiResponse<CompanyResponse> fetchCompanyById(UUID companyId) {
 
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new ResourceNotFound("Company don't exists"));
 
+        List<DriveResponse> drives = company.getDrives()
+                .stream()
+                .map(this::mapToDrivesResponse)
+                .toList();
+
+//        List<ResourceResponse> resources = company.getResources()
+//                .stream()
+//                .map(this::mapToResourceResponse)
+//                .toList();
+
+        CompanyResponse response = new CompanyResponse(
+                company.getId(),
+                company.getName(),
+                company.getLogoUrl(),
+                company.getShortDescription(),
+                company.getBusinessInfo(),
+                company.getCompanyType(),
+                drives
+//                resources
+        );
+
         return new ApiResponse<>(
                 true,
                 "Successfully fetched the company",
-                company,
+                response,
                 null
         );
     }
+
+
+
+
 
     // Fetch ALL companies
     public ApiResponse<Page<Company>> fetchAllCompanies(Pageable pageable) {
@@ -158,4 +168,48 @@ public class CompanyService {
     }
 
 
+
+
+    // Helper Methods
+
+    private DriveResponse mapToDrivesResponse(Drive drive) {
+
+        List<RoundResponse> rounds = drive.getRounds()
+                .stream()
+                .map(this::mapToRoundResponse)
+                .toList();
+
+        return new DriveResponse(
+                drive.getId(),
+                drive.getCompany().getId(),
+                drive.getCompany().getName(),
+                drive.getRoleOffered(),
+                drive.getEmploymentType(),
+                drive.getWorkMode(),
+                drive.getCtcOffered(),
+                drive.getStipend(),
+                drive.getJobDescription(),
+                drive.getRequiredSkills(),
+                drive.getEligibleDepartments(),
+                drive.getCutoffCgpa(),
+                drive.getCutOffTenthPercentage(),
+                drive.getCutOffTwelfthPercentage(),
+                drive.getMaxAllowedBacklogs(),
+                drive.getStatus(),
+                drive.getDriveDate(),
+                rounds
+        );
+    }
+
+    private RoundResponse mapToRoundResponse(Round round) {
+
+        return new RoundResponse(
+                round.getId(),
+                round.getRoundName(),
+                round.getSequenceNumber(),
+                round.getDescription(),
+                round.getDurationMinutes(),
+                round.getDifficulty()
+        );
+    }
 }
