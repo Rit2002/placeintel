@@ -7,6 +7,7 @@ import com.rtx.placeintel.entity.Company;
 import com.rtx.placeintel.entity.Drive;
 import com.rtx.placeintel.entity.Round;
 import com.rtx.placeintel.entity.User;
+import com.rtx.placeintel.exception.DuplicateResourceException;
 import com.rtx.placeintel.exception.ResourceNotFound;
 import com.rtx.placeintel.repository.CompanyRepository;
 import com.rtx.placeintel.repository.DriveRepository;
@@ -26,6 +27,11 @@ public class DriveService {
 
     @Transactional
     public ApiResponse<String> createDrive(UUID companyId, DriveRequest req, User tpo) {
+
+        if(driveRepository.existsByCompanyIdAndDriveDate(companyId, req.driveDate())) {
+
+            throw new DuplicateResourceException("Drive already exists.");
+        }
 
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new ResourceNotFound("Company not found"));
