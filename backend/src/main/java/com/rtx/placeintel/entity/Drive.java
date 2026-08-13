@@ -4,7 +4,7 @@ import com.rtx.placeintel.entity.enums.DriveStatus;
 import com.rtx.placeintel.entity.enums.EmploymentType;
 import com.rtx.placeintel.entity.enums.WorkMode;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -31,7 +31,11 @@ public class Drive {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    @NotBlank
+    @NotNull
+    private String roleOffered;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EmploymentType employmentType;
 
@@ -61,7 +65,11 @@ public class Drive {
     *
     * - @Column(name="skill") :- This specifies the column name in "drive_required_skills" table where the where each string is stored [like java, c++, spring boot].
     *
-    * -
+    * - A collection-table (@ElementCollection) row has no primary key of its own
+    *
+    * - Hibernate's typical strategy for updating an @ElementCollection is delete everything in the collection table,
+    *   then reinsert the current state on every save — since value-type rows have no identity, Hibernate can't tell "this row changed" from "this row was removed and a new one added,
+    *   " so it doesn't try; it just wipes and rewrites the whole collection
     * */
     @ElementCollection
     @CollectionTable(name = "drive_required_skills", joinColumns = @JoinColumn(name = "drive_id"))
@@ -70,16 +78,16 @@ public class Drive {
     private List<String> requiredSkills = new ArrayList<>();
 
     @ElementCollection
-    @CollectionTable(name = "drive_required_skills", joinColumns = @JoinColumn(name = "drive_id"))
+    @CollectionTable(name = "drive_eligible_departments", joinColumns = @JoinColumn(name = "drive_id"))
     @Column(name = "department")
     @Builder.Default
     private List<String> eligibleDepartments = new ArrayList<>();
 
     private Double cutoffCgpa;
 
-    private int cutoffTenthPercentage;
+    private Integer cutOffTenthPercentage;
 
-    private int cutoffTwelfthPercentage;
+    private Integer cutOffTwelfthPercentage;
 
     @Builder.Default
     @Column(nullable = false)
