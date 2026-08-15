@@ -56,7 +56,7 @@ public class ResourceController {
         ApiResponse<ResourceResponse> response = resourceService.addResource(companyId, req, tpo);
 
         return ResponseEntity
-                .status(HttpStatus.OK)
+                .status(HttpStatus.CREATED)
                 .body(response);
     }
 
