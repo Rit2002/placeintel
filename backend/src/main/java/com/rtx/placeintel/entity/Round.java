@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -40,8 +38,4 @@ public class Round {
 
     @Enumerated(EnumType.STRING)
     private RoundDifficulty difficulty;
-
-    @OneToMany(mappedBy = "round", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Resource> resources = new ArrayList<>();
 }

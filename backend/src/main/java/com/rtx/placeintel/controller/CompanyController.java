@@ -24,7 +24,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CompanyController {
 
+
+
+
     private final CompanyService companyService;
+
+
+
 
     @PostMapping("/company/register")
     @PreAuthorize("hasRole('TPO')")
@@ -40,6 +46,9 @@ public class CompanyController {
 
     }
 
+
+
+
     @DeleteMapping("/company/delete/{id}")
     @PreAuthorize("hasRole('TPO')")
     public ResponseEntity<ApiResponse<Void>> deleteCompany(@PathVariable UUID id) {
@@ -50,6 +59,9 @@ public class CompanyController {
                 .status(HttpStatus.OK)
                 .body(response);
     }
+
+
+
 
     @PutMapping("/company/update/{id}")
     @PreAuthorize("hasRole('TPO')")
@@ -65,6 +77,8 @@ public class CompanyController {
 
 
 
+
+
     @GetMapping("/company/{id}")
     public ResponseEntity<ApiResponse<CompanyResponse>> getCompanyById(@PathVariable UUID id) {
 
@@ -74,6 +88,9 @@ public class CompanyController {
                 .status(HttpStatus.OK)
                 .body(response);
     }
+
+
+
 
     @GetMapping("/company/all")
     public ResponseEntity<ApiResponse<Page<Company>>> getAllCompanies(@PageableDefault(size = 10)Pageable pageable) {

@@ -26,10 +26,6 @@ public class Resource {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
-    @ManyToOne
-    @JoinColumn(name = "round_id")
-    private Round round;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ResourceType type;
@@ -37,6 +33,10 @@ public class Resource {
     @NotBlank
     @Column(nullable = false)
     private String title;
+
+    @NotBlank
+    @Column(nullable = false)
+    private String url;
 
     @ManyToOne
     @JoinColumn(name = "added_by_tpo_id", nullable = false)
