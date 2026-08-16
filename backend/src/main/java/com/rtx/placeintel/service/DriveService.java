@@ -5,12 +5,18 @@ import com.rtx.placeintel.entity.Company;
 import com.rtx.placeintel.entity.Drive;
 import com.rtx.placeintel.entity.Round;
 import com.rtx.placeintel.entity.User;
+import com.rtx.placeintel.entity.enums.DriveStatus;
+import com.rtx.placeintel.entity.enums.EmploymentType;
 import com.rtx.placeintel.exception.DuplicateResourceException;
 import com.rtx.placeintel.exception.ResourceNotFound;
 import com.rtx.placeintel.repository.CompanyRepository;
 import com.rtx.placeintel.repository.DriveRepository;
+import com.rtx.placeintel.service.spec.DriveSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +28,8 @@ public class DriveService {
 
     private final DriveRepository driveRepository;
     private final CompanyRepository companyRepository;
+
+
 
     @Transactional
     public ApiResponse<String> createDrive(UUID companyId, DriveRequest req, User tpo) {
@@ -103,6 +111,8 @@ public class DriveService {
 
     }
 
+
+
     @Transactional
     public ApiResponse<String> deleteDrive(UUID driveId) {
 
@@ -121,6 +131,9 @@ public class DriveService {
         );
     }
 
+
+
+
     public ApiResponse<DriveResponse> getDriveById(UUID driveId) {
 
         Drive drive = driveRepository.findById(driveId)
@@ -135,6 +148,37 @@ public class DriveService {
         );
     }
 
+
+
+    public ApiResponse<Page<DriveResponse>> searchDrives(
+            String skill,
+            String department,
+            Double minCgpa,
+            Integer minTenthPercentage,
+            Integer minTwelfthPercentage,
+            Integer maxBacklogs,
+            EmploymentType employmentType,
+            DriveStatus status,
+            Pageable pageable
+    ) {
+        Specification<Drive> spec = DriveSpecification.build(
+                skill, department,
+                minCgpa, maxBacklogs,
+                minTenthPercentage, minTwelfthPercentage,
+                employmentType, status
+        );
+
+        Page<DriveResponse> results = driveRepository.findAll(spec, pageable)
+                .map(this::toResponse);
+//Expanded version: .map(drive -> this.toResponse(drive))
+
+        return new ApiResponse<>(
+                true,
+                "Search completed",
+                results,
+                null
+        );
+    }
 
 
     // Helper methods
