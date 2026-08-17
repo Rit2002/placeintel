@@ -8,6 +8,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -47,6 +49,13 @@ public class StudentProfile {
     private String githubUsername;
 
     private String resumeUrl;
+
+    @ElementCollection
+    @CollectionTable(name = "student_skills", joinColumns = @JoinColumn(name = "student_profile_id"))
+    @Column(name = "skill")
+    @Builder.Default
+    private List<String> skills = new ArrayList<>();
+
 
     @Builder.Default
     @Column(nullable = false)
