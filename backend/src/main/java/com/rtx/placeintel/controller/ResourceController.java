@@ -31,6 +31,7 @@ public class ResourceController {
 
 
     @GetMapping("/companies/{companyId}/resources")
+    @PreAuthorize("hasAnyRole('STUDENT', 'TPO', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<ResourceResponse>>> getCompanyResources(@PathVariable UUID companyId) {
 
         ApiResponse<List<ResourceResponse>> response = resourceService.getCompanyResources(companyId);

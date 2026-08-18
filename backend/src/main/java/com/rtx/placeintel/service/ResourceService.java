@@ -20,11 +20,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ResourceService {
 
+
     private final ResourceRepository resourceRepository;
     private final CompanyRepository companyRepository;
 
+
+
     @Transactional
     public ApiResponse<ResourceResponse> addResource(UUID companyId, ResourceRequest req, User tpo) {
+
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new ResourceNotFound("Company not found: " + companyId));
 

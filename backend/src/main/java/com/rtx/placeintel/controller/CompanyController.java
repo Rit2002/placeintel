@@ -5,6 +5,9 @@ import com.rtx.placeintel.dto.CompanyReference;
 import com.rtx.placeintel.dto.CompanyRequest;
 import com.rtx.placeintel.dto.CompanyResponse;
 import com.rtx.placeintel.entity.Company;
+import com.rtx.placeintel.entity.User;
+import com.rtx.placeintel.entity.enums.CompanyType;
+import com.rtx.placeintel.repository.UserRepository;
 import com.rtx.placeintel.service.CompanyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +31,11 @@ public class CompanyController {
 
 
     private final CompanyService companyService;
+    private final UserRepository userRepository;
 
 
 
-
+    // -------- Write - Only endpoint ---------
     @PostMapping("/company/register")
     @PreAuthorize("hasRole('TPO')")
     public ResponseEntity<ApiResponse<CompanyReference>> createCompany(@Valid @RequestBody CompanyRequest req,
@@ -78,11 +82,14 @@ public class CompanyController {
 
 
 
-
+    // --------- Read - Only access ------------
     @GetMapping("/company/{id}")
-    public ResponseEntity<ApiResponse<CompanyResponse>> getCompanyById(@PathVariable UUID id) {
+    @PreAuthorize("hasRole('STUDENT', 'TPO', 'ADMIN')")
+    public ResponseEntity<ApiResponse<CompanyResponse>> getCompanyById(@PathVariable UUID id, Authentication authentication) {
 
-        ApiResponse<CompanyResponse> response = companyService.fetchCompanyById(id);
+        User user = currentUser(authentication);
+
+        ApiResponse<CompanyResponse> response = companyService.fetchCompanyById(id, user);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -92,14 +99,45 @@ public class CompanyController {
 
 
 
-    @GetMapping("/company/all")
-    public ResponseEntity<ApiResponse<Page<Company>>> getAllCompanies(@PageableDefault(size = 10)Pageable pageable) {
+    @GetMapping("/companies/all")
+    public ResponseEntity<ApiResponse<Page<CompanyResponse>>> getAllCompanies(@PageableDefault(size = 10)Pageable pageable) {
 
-        ApiResponse<Page<Company>> response = companyService.fetchAllCompanies(pageable);
+        ApiResponse<Page<CompanyResponse>> response = companyService.fetchAllCompanies(pageable);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(response);
+    }
+
+
+
+    @GetMapping("/companies/search")
+    public ResponseEntity<ApiResponse<Page<CompanyReference>>> searchCompanies(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) CompanyType companyType,
+            @PageableDefault(size = 20, sort = "name") Pageable pageable
+    ) {
+
+
+
+        ApiResponse<Page<CompanyReference>> response =
+                companyService.searchCompanies(name, companyType, pageable);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+
+    }
+
+
+
+
+    // Helper method
+    private User currentUser(Authentication auth) {
+
+        String email = auth.getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found" + email));
     }
 
 

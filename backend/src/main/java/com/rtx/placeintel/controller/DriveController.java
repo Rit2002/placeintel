@@ -35,6 +35,7 @@ public class DriveController {
     //------ Reads ( Any Authenticated user) -----
 
     @GetMapping("/drive/{id}")
+    @PreAuthorize("hasRole('STUDENT', 'TPO', 'ADMIN')")
     public ResponseEntity<ApiResponse<DriveResponse>> getDriveById(@PathVariable UUID id) {
 
         ApiResponse<DriveResponse> response = driveService.getDriveById(id);

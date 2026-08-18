@@ -12,6 +12,7 @@ import com.rtx.placeintel.repository.StudentProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -143,4 +144,18 @@ public class StudentProfileService {
                 p.getVerificationNote()
         );
     }
+
+
+    public void assertVerified(User student) {
+
+        StudentProfile profile = studentProfileRepository.findByUserId(student.getId())
+                .orElseThrow(() -> new ResourceNotFound("Student profile not found"));
+
+
+        if (profile.getVerificationStatus() != VerificationStatus.VERIFIED) {
+            throw new AccessDeniedException(
+                    "Your profile must be verified by TPO before accessing this feature");
+        }
+    }
+
 }

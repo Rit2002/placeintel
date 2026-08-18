@@ -1,23 +1,23 @@
 package com.rtx.placeintel.service;
 
 import com.rtx.placeintel.dto.*;
-import com.rtx.placeintel.entity.Company;
-import com.rtx.placeintel.entity.Drive;
-import com.rtx.placeintel.entity.Round;
-import com.rtx.placeintel.entity.User;
+import com.rtx.placeintel.entity.*;
+import com.rtx.placeintel.entity.enums.CompanyType;
+import com.rtx.placeintel.entity.enums.Role;
 import com.rtx.placeintel.exception.DuplicateResourceException;
 import com.rtx.placeintel.exception.ResourceNotFound;
 import com.rtx.placeintel.repository.CompanyRepository;
 import com.rtx.placeintel.repository.UserRepository;
+import com.rtx.placeintel.service.spec.CompanySpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -29,6 +29,7 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
+    private final StudentProfileService studentProfileService;
 
 
     // Register the company
@@ -57,7 +58,11 @@ public class CompanyService {
 
         CompanyReference companyResponse = new CompanyReference(
                 saved.getId(),
-                saved.getName()
+                saved.getName(),
+                saved.getLogoUrl(),
+                saved.getShortDescription(),
+                saved.getBusinessInfo(),
+                saved.getCompanyType()
         );
 
         return  new ApiResponse<>(
@@ -116,7 +121,12 @@ public class CompanyService {
 
 
     // Fetch the company details
-    public ApiResponse<CompanyResponse> fetchCompanyById(UUID companyId) {
+    public ApiResponse<CompanyResponse> fetchCompanyById(UUID companyId, User requester) {
+
+        if(requester.getRole() == Role.STUDENT) {
+
+            studentProfileService.assertVerified(requester);
+        }
 
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> new ResourceNotFound("Company don't exists"));
@@ -126,10 +136,10 @@ public class CompanyService {
                 .map(this::mapToDrivesResponse)
                 .toList();
 
-//        List<ResourceResponse> resources = company.getResources()
-//                .stream()
-//                .map(this::mapToResourceResponse)
-//                .toList();
+        List<ResourceResponse> resources = company.getResources()
+                .stream()
+                .map(this::mapToResourceResponse)
+                .toList();
 
         CompanyResponse response = new CompanyResponse(
                 company.getId(),
@@ -138,8 +148,8 @@ public class CompanyService {
                 company.getShortDescription(),
                 company.getBusinessInfo(),
                 company.getCompanyType(),
-                drives
-//                resources
+                drives,
+                resources
         );
 
         return new ApiResponse<>(
@@ -153,11 +163,11 @@ public class CompanyService {
 
 
 
-
     // Fetch ALL companies
-    public ApiResponse<Page<Company>> fetchAllCompanies(Pageable pageable) {
+    public ApiResponse<Page<CompanyResponse>> fetchAllCompanies(Pageable pageable) {
 
-        Page<Company> companies = companyRepository.findAll(pageable);
+        Page<CompanyResponse> companies = companyRepository.findAll(pageable)
+                .map(this::toCompanyResponse);
 
         return new ApiResponse<>(
                 true,
@@ -170,7 +180,62 @@ public class CompanyService {
 
 
 
+    public ApiResponse<Page<CompanyReference>> searchCompanies(
+            String name,
+            CompanyType companyType,
+            Pageable pageable
+    ) {
+        Specification<Company> spec = CompanySpecification.build(name, companyType);
+
+        Page<CompanyReference> results = companyRepository.findAll(spec, pageable)
+                .map(this::toResponse);
+
+        return new ApiResponse<>(
+                true,
+                "Company search completed",
+                results,
+                null
+        );
+    }
+
+
     // Helper Methods
+
+    private CompanyResponse toCompanyResponse(Company company) {
+
+         /*
+            1) company.getDrives() :- Returns List<Drive>. List does not provide .map() directly.
+
+            2) .stream() :- Converts List<Drive> into Stream<Drive>. Stream provides operations like map(), filter(), sorted(), etc.
+
+            3).map(...) :- Transforms each element of the stream.
+            Here: Drive → DriveResponse.
+            Result: Stream<DriveResponse>.
+
+            4).toList() :- Converts the resulting Stream<DriveResponse> back into List<DriveResponse>.
+        */
+
+        List<DriveResponse> driveResponses = company.getDrives()
+                .stream()
+                .map(this::mapToDrivesResponse)
+                .toList();
+
+        List<ResourceResponse> resourceResponses = company.getResources()
+                .stream()
+                .map(this::mapToResourceResponse)
+                .toList();
+
+        return new CompanyResponse(
+                company.getId(),
+                company.getName(),
+                company.getLogoUrl(),
+                company.getShortDescription(),
+                company.getBusinessInfo(),
+                company.getCompanyType(),
+                driveResponses,
+                resourceResponses
+        );
+    }
 
     private DriveResponse mapToDrivesResponse(Drive drive) {
 
@@ -210,6 +275,29 @@ public class CompanyService {
                 round.getDescription(),
                 round.getDurationMinutes(),
                 round.getDifficulty()
+        );
+    }
+
+    private ResourceResponse mapToResourceResponse(Resource resource) {
+
+        return new ResourceResponse(
+                resource.getId(),
+                resource.getType(),
+                resource.getTitle(),
+                resource.getUrl(),
+                resource.getCreatedAt()
+        );
+    }
+
+    private CompanyReference toResponse(Company company) {
+
+        return new CompanyReference(
+                company.getId(),
+                company.getName(),
+                company.getLogoUrl(),
+                company.getShortDescription(),
+                company.getBusinessInfo(),
+                company.getCompanyType()
         );
     }
 }
