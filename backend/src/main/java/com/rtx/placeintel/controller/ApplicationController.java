@@ -2,6 +2,7 @@ package com.rtx.placeintel.controller;
 
 import com.rtx.placeintel.dto.ApiResponse;
 import com.rtx.placeintel.dto.ApplicationResponse;
+import com.rtx.placeintel.dto.RankedApplicationResponse;
 import com.rtx.placeintel.entity.User;
 import com.rtx.placeintel.repository.UserRepository;
 import com.rtx.placeintel.service.ApplicationService;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/placeintel/api/v1/students/me/applications")
+@RequestMapping("/placeintel/api/v1")
 @RequiredArgsConstructor
 public class ApplicationController {
 
@@ -32,7 +33,7 @@ public class ApplicationController {
 
 
 
-    @PostMapping("/{driveId}")
+    @PostMapping("/students/me/applications/{driveId}")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<ApplicationResponse>> apply( @PathVariable UUID driveId,
                                                                    Authentication authentication) {
@@ -49,7 +50,7 @@ public class ApplicationController {
 
 
 
-    @GetMapping
+    @GetMapping("/students/me/applications")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<Page<ApplicationResponse>>> getMyApplications(
             Authentication authentication,
@@ -59,6 +60,21 @@ public class ApplicationController {
 
         ApiResponse<Page<ApplicationResponse>> response =
                 applicationService.getMyApplications(student, pageable);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
+
+
+    @GetMapping("/tpo/drives/{driveId}/applicants")
+    @PreAuthorize("hasRole('TPO')")
+    public ResponseEntity<ApiResponse<Page<RankedApplicationResponse>>> getRankedApplicants(
+            @PathVariable UUID driveId,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        ApiResponse<Page<RankedApplicationResponse>> response =
+                applicationService.getRankedApplicants(driveId, pageable);
 
         return ResponseEntity
                 .status(HttpStatus.OK)

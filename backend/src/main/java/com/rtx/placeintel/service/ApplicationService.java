@@ -2,6 +2,7 @@ package com.rtx.placeintel.service;
 
 import com.rtx.placeintel.dto.ApiResponse;
 import com.rtx.placeintel.dto.ApplicationResponse;
+import com.rtx.placeintel.dto.RankedApplicationResponse;
 import com.rtx.placeintel.entity.*;
 import com.rtx.placeintel.entity.enums.VerificationStatus;
 import com.rtx.placeintel.exception.DuplicateResourceException;
@@ -11,6 +12,7 @@ import com.rtx.placeintel.repository.DriveRepository;
 import com.rtx.placeintel.repository.StudentProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final DriveRepository driveRepository;
+    private final RankingService rankingService;
 
 
 
@@ -90,6 +93,7 @@ public class ApplicationService {
                 .findByStudentProfileId(profile.getId(), pageable)
                 .map(this::toResponse);
 
+
         return new ApiResponse<>(
                 true,
                 "Applications fetched",
@@ -98,6 +102,90 @@ public class ApplicationService {
         );
     }
 
+
+
+
+    public ApiResponse<Page<RankedApplicationResponse>> getRankedApplicants(UUID driveId, Pageable pageable) {
+
+        Drive drive = driveRepository.findById(driveId)
+                .orElseThrow(() -> new ResourceNotFound("Drive not found: " + driveId));
+
+        List<Application> applications = applicationRepository.findByDriveId(driveId, Pageable.unpaged()).getContent();
+
+        /*
+        * Taking out each application of student one by one and
+        * invoking the calculateScore method and
+        * setting setRuleBasedScore field
+        * */
+        List<Application> scored = applications.stream()
+                .peek(application -> application.setRuleBasedScore(
+                        rankingService.calculateScore(application.getStudentProfile(), drive)))
+                .toList();
+
+
+        applicationRepository.saveAll(scored);
+
+        /*
+        * Ranks the students by there score in descending order
+        * */
+        List<RankedApplicationResponse> ranked = scored.stream()
+                .sorted((a, b) -> Double.compare(
+                        b.getRuleBasedScore(),
+                        a.getRuleBasedScore()
+                ))
+                .map(this::toRankedResponse)
+                .toList();
+
+
+        /*
+        * - start & end specifies the starting and ending page no
+        *
+        * - pageable.getOffset() tells you where this page should start in the complete list.
+        *   Ex : page = 2, size = 10 --> offset = 2 X 10 = 20
+        * */
+        int start = (int) pageable.getOffset();
+
+        int end = Math.min(start + pageable.getPageSize(), ranked.size());
+
+        // If starting page is exceed the no of applicants than returns empty list otherwise small portion of list
+        List<RankedApplicationResponse> pageContent =
+                start > ranked.size()
+                        ? List.of()
+                        : ranked.subList(start, end);
+
+        // PageImpl creates a Spring Page object.
+        // pageContent :- This is the actual data for the requested page.
+        //pageable :- This tells Spring: current page & page size
+        //ranked.size() :- This tells spring the total number of elements
+        Page<RankedApplicationResponse> page =
+                new PageImpl<>(
+                        pageContent,
+                        pageable,
+                        ranked.size()
+                );
+
+
+        return new ApiResponse<>(
+                true,
+                "Ranked applicants fetched",
+                page,
+                null
+        );
+    }
+
+
+
+
+    // Helper method
+    private RankedApplicationResponse toRankedResponse(Application app) {
+        return new RankedApplicationResponse(
+                app.getId(),
+                app.getStudentProfile().getFullName(),
+                app.getStudentProfile().getEnrollmentNo(),
+                app.getRuleBasedScore(),
+                app.getStatus()
+        );
+    }
 
 
 
@@ -146,4 +234,6 @@ public class ApplicationService {
 
         return reasons;
     }
+
+
 }
