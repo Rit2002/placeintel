@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,6 +24,15 @@ public interface DriveRepository extends JpaRepository<Drive, UUID>, JpaSpecific
 
     boolean existsByCompanyIdAndDriveDate(UUID companyId, LocalDate driveDate);
 
-
     List<Drive> findByDriveDateBeforeAndStatusNot(LocalDate date, DriveStatus status);
+
+    long countByStatus(DriveStatus status);
+
+    /*
+    * @Query tells Spring Data JPA: Don't generate the query from the method name. Use this query that I'm explicitly giving you
+    *
+    * */
+    @Query("SELECT MAX(d.ctcOffered) FROM Drive d")
+    Double findHighestCtcOffered();
+
 }

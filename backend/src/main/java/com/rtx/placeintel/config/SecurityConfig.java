@@ -79,7 +79,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/placeintel/api/v1/auth/**").permitAll()
+                        .requestMatchers("/placeintel/api/v1/auth/**", "/placeintel/api/v1/stats/homepage").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
