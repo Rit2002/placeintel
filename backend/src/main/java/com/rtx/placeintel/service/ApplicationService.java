@@ -4,6 +4,7 @@ import com.rtx.placeintel.dto.ApiResponse;
 import com.rtx.placeintel.dto.ApplicationResponse;
 import com.rtx.placeintel.dto.RankedApplicationResponse;
 import com.rtx.placeintel.entity.*;
+import com.rtx.placeintel.entity.enums.DriveStatus;
 import com.rtx.placeintel.entity.enums.VerificationStatus;
 import com.rtx.placeintel.exception.DuplicateResourceException;
 import com.rtx.placeintel.exception.ResourceNotFound;
@@ -42,6 +43,7 @@ public class ApplicationService {
         StudentProfile profile = studentProfileRepository.findByUserId(student.getId())
                 .orElseThrow(() -> new ResourceNotFound("Student profile not found"));
 
+
         if (profile.getVerificationStatus() != VerificationStatus.VERIFIED) {
             throw new AccessDeniedException("Your profile must be verified before applying to drives");
         }
@@ -52,6 +54,13 @@ public class ApplicationService {
 
         Drive drive = driveRepository.findById(driveId)
                 .orElseThrow(() -> new ResourceNotFound("Drive not found: " + driveId));
+
+
+        if(drive.getStatus() != DriveStatus.ONGOING) {
+
+            throw new AccessDeniedException("This drive is not currently accepting applications (status: " + drive.getStatus() + ")");
+        }
+
 
         if (applicationRepository.existsByStudentProfileIdAndDriveId(profile.getId(), driveId)) {
             throw new DuplicateResourceException("You have already applied to this drive");

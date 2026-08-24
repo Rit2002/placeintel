@@ -37,8 +37,7 @@ public class StudentProfileService {
         StudentProfile profile = studentProfileRepository.findByUserId(student.getId())
                 .orElseThrow(() -> new ResourceNotFound("Student profile not found"));
 
-
-        profile.setDepartment(req.department());
+        profile.setDepartment(normalize(req.department()));
         profile.setCgpa(req.cgpa());
         profile.setTenthPercentage(req.tenthPercentage());
         profile.setTwelfthPercentage(req.twelfthPercentage());
@@ -156,6 +155,10 @@ public class StudentProfileService {
             throw new AccessDeniedException(
                     "Your profile must be verified by TPO before accessing this feature");
         }
+    }
+
+    private String normalize(String value) {
+        return value == null ? null : value.trim().toUpperCase();
     }
 
 }

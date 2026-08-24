@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -52,7 +53,11 @@ public class DriveService {
                 .stipend(req.stipend())
                 .jobDescription(req.jobDescription())
                 .requiredSkills(req.requiredSkills())
-                .eligibleDepartments(req.eligibleDepartments())
+                .eligibleDepartments(
+                        req.eligibleDepartments() != null
+                        ? req.eligibleDepartments().stream().map(this::normalize).toList()
+                        : new ArrayList<>()
+                )
                 .cutoffCgpa(req.cutOffCgpa())
                 .cutOffTenthPercentage(req.cutOffTenthPercentage())
                 .cutOffTwelfthPercentage((req.cutOffTwelfthPercentage()))
@@ -92,7 +97,11 @@ public class DriveService {
         drive.setStipend(req.stipend());
         drive.setJobDescription(req.jobDescription());
         drive.setRequiredSkills(req.requiredSkills());
-        drive.setEligibleDepartments(req.eligibleDepartments());
+        drive.setEligibleDepartments(
+                req.eligibleDepartments() != null
+                        ? req.eligibleDepartments().stream().map(this::normalize).toList()
+                        : new ArrayList<>()
+        );
         drive.setCutoffCgpa(req.cutOffCgpa());
         drive.setCutOffTenthPercentage(req.cutOffTenthPercentage());
         drive.setCutOffTwelfthPercentage(req.cutOffTwelfthPercentage());
@@ -215,6 +224,10 @@ public class DriveService {
 
             drive.getRounds().add(round);
         }
+    }
+
+    private String normalize(String value) {
+        return value == null ? null : value.trim().toUpperCase();
     }
 
 }
