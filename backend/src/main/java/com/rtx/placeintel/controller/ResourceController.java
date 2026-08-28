@@ -4,8 +4,8 @@ import com.rtx.placeintel.dto.ApiResponse;
 import com.rtx.placeintel.dto.ResourceRequest;
 import com.rtx.placeintel.dto.ResourceResponse;
 import com.rtx.placeintel.entity.User;
-import com.rtx.placeintel.repository.UserRepository;
 import com.rtx.placeintel.service.ResourceService;
+import com.rtx.placeintel.util.CurrentUserResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,7 +25,7 @@ public class ResourceController {
 
 
     private final ResourceService resourceService;
-    private final UserRepository userRepository;
+    private final CurrentUserResolver currentUserResolver;
 
 
 
@@ -52,7 +52,7 @@ public class ResourceController {
     public ResponseEntity<ApiResponse<ResourceResponse>> addResource(@PathVariable UUID companyId,
                                                         @Valid @RequestBody ResourceRequest req,
                                                         Authentication authentication) {
-        User tpo = currentUser(authentication);
+        User tpo = currentUserResolver.resolve(authentication);
 
         ApiResponse<ResourceResponse> response = resourceService.addResource(companyId, req, tpo);
 
@@ -76,11 +76,4 @@ public class ResourceController {
     }
 
 
-
-
-    // ---------- Helper Method ---------
-    private User currentUser(Authentication authentication) {
-        return userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
-    }
 }

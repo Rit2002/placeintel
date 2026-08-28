@@ -119,6 +119,21 @@ public class StudentProfileService {
     }
 
 
+    public ApiResponse<StudentProfileResponse> getProfileById(UUID studentProfileId) {
+
+        StudentProfile profile = studentProfileRepository.findById(studentProfileId)
+                .orElseThrow(() -> new ResourceNotFound("Student profile NOT found"));
+
+        StudentProfileResponse parsedResponse = toResponse(profile);
+
+        return new ApiResponse<>(
+                true,
+                "Successfully fetched the student profile",
+                parsedResponse,
+                null
+        );
+    }
+
 
 
     // Helper Methods

@@ -18,7 +18,7 @@ import java.util.UUID;
 * */
 public interface DriveRepository extends JpaRepository<Drive, UUID>, JpaSpecificationExecutor<Drive> {
 
-    Page<Drive> findByCompanyId(UUID companyId, Pageable pageable);
+    List<Drive> findByCompanyId(UUID companyId);
 
     Page<Drive> findByStatus(DriveStatus status, Pageable pageable);
 

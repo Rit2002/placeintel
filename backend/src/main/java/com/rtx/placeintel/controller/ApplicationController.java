@@ -4,8 +4,8 @@ import com.rtx.placeintel.dto.ApiResponse;
 import com.rtx.placeintel.dto.ApplicationResponse;
 import com.rtx.placeintel.dto.RankedApplicationResponse;
 import com.rtx.placeintel.entity.User;
-import com.rtx.placeintel.repository.UserRepository;
 import com.rtx.placeintel.service.ApplicationService;
+import com.rtx.placeintel.util.CurrentUserResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +28,7 @@ public class ApplicationController {
 
     private final ApplicationService applicationService;
 
-    private final UserRepository userRepository;
+    private final CurrentUserResolver currentUserResolver;
 
 
 
@@ -38,7 +38,7 @@ public class ApplicationController {
     public ResponseEntity<ApiResponse<ApplicationResponse>> apply( @PathVariable UUID driveId,
                                                                    Authentication authentication) {
 
-        User student = currentUser(authentication);
+        User student = currentUserResolver.resolve(authentication);
 
         ApiResponse<ApplicationResponse> response = applicationService.apply(student, driveId);
 
@@ -56,7 +56,7 @@ public class ApplicationController {
             Authentication authentication,
             @PageableDefault(size = 20, sort = "appliedAt") Pageable pageable) {
 
-        User student = currentUser(authentication);
+        User student = currentUserResolver.resolve(authentication);
 
         ApiResponse<Page<ApplicationResponse>> response =
                 applicationService.getMyApplications(student, pageable);
@@ -84,10 +84,5 @@ public class ApplicationController {
 
 
 
-    // Helper Method
-    private User currentUser(Authentication authentication) {
 
-        return userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
-    }
 }

@@ -4,11 +4,10 @@ import com.rtx.placeintel.dto.ApiResponse;
 import com.rtx.placeintel.dto.CompanyReference;
 import com.rtx.placeintel.dto.CompanyRequest;
 import com.rtx.placeintel.dto.CompanyResponse;
-import com.rtx.placeintel.entity.Company;
 import com.rtx.placeintel.entity.User;
 import com.rtx.placeintel.entity.enums.CompanyType;
-import com.rtx.placeintel.repository.UserRepository;
 import com.rtx.placeintel.service.CompanyService;
+import com.rtx.placeintel.util.CurrentUserResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +19,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import org.springframework.data.domain.Pageable;
+
+
 import java.util.UUID;
 
 @RestController
@@ -31,7 +32,7 @@ public class CompanyController {
 
 
     private final CompanyService companyService;
-    private final UserRepository userRepository;
+    private final CurrentUserResolver currentUserResolver;
 
 
 
@@ -84,10 +85,10 @@ public class CompanyController {
 
     // --------- Read - Only access ------------
     @GetMapping("/company/{id}")
-    @PreAuthorize("hasRole('STUDENT', 'TPO', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT', 'TPO', 'ADMIN')")
     public ResponseEntity<ApiResponse<CompanyResponse>> getCompanyById(@PathVariable UUID id, Authentication authentication) {
 
-        User user = currentUser(authentication);
+        User user = currentUserResolver.resolve(authentication);
 
         ApiResponse<CompanyResponse> response = companyService.fetchCompanyById(id, user);
 
@@ -129,16 +130,6 @@ public class CompanyController {
 
     }
 
-
-
-
-    // Helper method
-    private User currentUser(Authentication auth) {
-
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found" + email));
-    }
 
 
 }

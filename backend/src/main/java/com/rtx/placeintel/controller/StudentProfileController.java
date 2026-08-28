@@ -5,8 +5,8 @@ import com.rtx.placeintel.dto.CompleteProfileRequest;
 import com.rtx.placeintel.dto.StudentProfileResponse;
 import com.rtx.placeintel.dto.VerifyStudentRequest;
 import com.rtx.placeintel.entity.User;
-import com.rtx.placeintel.repository.UserRepository;
 import com.rtx.placeintel.service.StudentProfileService;
+import com.rtx.placeintel.util.CurrentUserResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,7 +30,7 @@ public class StudentProfileController {
 
     private final StudentProfileService studentProfileService;
 
-    private final UserRepository userRepository;
+    private final CurrentUserResolver currentUserResolver;
 
 
 
@@ -40,7 +40,7 @@ public class StudentProfileController {
     public ResponseEntity<ApiResponse<StudentProfileResponse>> getMyProfile(Authentication authentication) {
 
 
-        User student = currentUser(authentication);
+        User student = currentUserResolver.resolve(authentication);
 
 
         ApiResponse<StudentProfileResponse> response = studentProfileService.getMyProfile(student);
@@ -60,7 +60,7 @@ public class StudentProfileController {
             Authentication authentication) {
 
 
-        User student = currentUser(authentication);
+        User student = currentUserResolver.resolve(authentication);
 
         ApiResponse<StudentProfileResponse> response = studentProfileService.completeProfile(student, req);
 
@@ -105,10 +105,4 @@ public class StudentProfileController {
 
 
 
-    // Helper Method
-    private User currentUser(Authentication authentication) {
-
-        return userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
-    }
 }

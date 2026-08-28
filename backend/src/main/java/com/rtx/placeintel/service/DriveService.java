@@ -20,6 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -188,6 +189,42 @@ public class DriveService {
                 null
         );
     }
+
+
+
+
+
+    public ApiResponse<DriveResponse> getMostRelevantDrive(UUID companyId) {
+
+        List<Drive> drives = driveRepository.findByCompanyId(companyId);
+
+        if (drives.isEmpty()) {
+            throw new ResourceNotFound("No drives found for this company");
+        }
+
+        /*
+        1. Finds the first ongoing drive.
+        2. If there is no ongoing drive, finds the drive with the latest date.
+        3. If there are no drives at all, throw's an exception.
+        */
+        Drive best = drives.stream()
+                .filter(d -> d.getStatus() == DriveStatus.ONGOING)
+                .findFirst()
+                .orElseGet(() -> drives.stream()
+                        .max(Comparator.comparing(Drive::getDriveDate))
+                        .orElseThrow());
+
+        DriveResponse response =  toResponse(best);
+
+        return new ApiResponse<>(
+                true,
+                "Fetched the recent drive.",
+                response,
+                null
+        );
+    }
+
+
 
 
     // Helper methods
