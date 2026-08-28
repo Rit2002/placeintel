@@ -1,13 +1,10 @@
-import os
 import requests
 from tavily import TavilyClient
 from langchain_core.tools import tool
+from config import SPRING_BOOT_BASE_URL, INTERNAL_API_KEY, TAVILY_API_KEY
 
-SPRING_BOOT_BASE_URL = "http://localhost:8080/placeintel/api/v1"
+_tavily = TavilyClient(api_key=TAVILY_API_KEY)
 
-_tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
-
-INTERNAL_API_KEY = os.getenv("SPRING_INTERNAL_API_KEY")
 
 
 
@@ -19,7 +16,7 @@ def get_student_profile(student_id: str) -> dict:
     Use this to understand the student's current skill level before
     building a prep roadmap."""
 
-    response = requests.get(f"{SPRING_BOOT_BASE_URL}/internal/students/{student_id}")
+    response = requests.get(f"{SPRING_BOOT_BASE_URL}/internal/students/{student_id}", headers={"X-Internal-Api-Key": INTERNAL_API_KEY})
 
     response.raise_for_status()
 
@@ -33,17 +30,28 @@ def get_student_profile(student_id: str) -> dict:
 
 
 @tool
-def get_drive_requirements(drive_id: str) -> dict:
-    """Fetch a specific drive's requirements: role, required skills,
-    rounds, and round details. Use this to know what the student needs
-    to prepare for."""
+def get_drive_requirements(company_id: str) -> dict:
+    """Fetch the most relevant drive for a company — the currently
+    active drive if one exists, otherwise the most recent past drive.
+    Use this to understand what this company typically requires:
+    role, required skills, rounds, and round details."""
 
-    response = requests.get(f"{SPRING_BOOT_BASE_URL}/drives/{drive_id}")
+    try:
 
-    # response.raise_for_status() is a method from Python's requests library that checks whether the HTTP request succeeded.
-    response.raise_for_status()
+        response = requests.get(
+            f"{SPRING_BOOT_BASE_URL}/internal/companies/{company_id}/most-relevant-drive",
+            headers={"X-Internal-Api-Key": INTERNAL_API_KEY}
+        )
+        
+        response.raise_for_status()
 
-    return response.json()
+        return response.json()
+    
+    except requests.exceptions.HTTPError:
+        
+        return {
+            "info": "No drive history available for this company yet."
+        }
 
 
 

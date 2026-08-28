@@ -6,8 +6,8 @@ import com.rtx.placeintel.dto.DriveResponse;
 import com.rtx.placeintel.entity.User;
 import com.rtx.placeintel.entity.enums.DriveStatus;
 import com.rtx.placeintel.entity.enums.EmploymentType;
-import com.rtx.placeintel.repository.UserRepository;
 import com.rtx.placeintel.service.DriveService;
+import com.rtx.placeintel.util.CurrentUserResolver;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class DriveController {
 
     private final DriveService driveService;
-    private final UserRepository userRepository;
+    private final CurrentUserResolver currentUserResolver;
 
 
 
@@ -84,9 +84,9 @@ public class DriveController {
     @PreAuthorize("hasRole('TPO')")
     public ResponseEntity<ApiResponse<String>> createDrive(@PathVariable UUID companyId,
                                                            @Valid @RequestBody DriveRequest req,
-                                                           Authentication auth) {
+                                                           Authentication authentication) {
 
-        User tpo = currentUser(auth);
+        User tpo = currentUserResolver.resolve(authentication);
 
         ApiResponse<String> response = driveService.createDrive(companyId, req, tpo);
 
@@ -124,14 +124,5 @@ public class DriveController {
                 .body(response);
     }
 
-
-
-    // Helper method
-    private User currentUser(Authentication auth) {
-
-        String email = auth.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found" + email));
-    }
 
 }

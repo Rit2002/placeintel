@@ -34,28 +34,6 @@ public class InternalController {
 
 
 
-    @GetMapping("/drives/{driveId}")
-    public ResponseEntity<ApiResponse<DriveResponse>> getDrive(
-
-            @PathVariable UUID driveId,
-
-            @RequestHeader("X-Internal-Api-Key") String providedKey
-
-    ) {
-
-        validateKey(providedKey);
-
-        ApiResponse<DriveResponse> response = driveService.getDriveById(driveId);
-
-        return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(response);
-    }
-
-
-
-
-
     @GetMapping("/students/{studentProfileId}")
     public ResponseEntity<ApiResponse<StudentProfileResponse>> getStudentProfile(
 
@@ -78,7 +56,23 @@ public class InternalController {
 
 
 
+    @GetMapping("/companies/{companyId}/most-relevant-drive")
+    public ResponseEntity<ApiResponse<DriveResponse>> getMostRelevantDrive(
+            @PathVariable UUID companyId,
+            @RequestHeader("X-Internal-Api-Key") String providedKey) {
 
+        validateKey(providedKey);
+
+       ApiResponse<DriveResponse> response =  driveService.getMostRelevantDrive(companyId);
+
+       return ResponseEntity
+               .status(HttpStatus.OK)
+               .body(response);
+    }
+
+
+
+    // Helper Methods
     private void validateKey(String providedKey) {
 
         if (!internalApiKey.equals(providedKey)) {

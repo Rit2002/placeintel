@@ -23,6 +23,9 @@ public class AuthController {
 
     private final AuthService authService;
 
+
+
+
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid  @RequestBody RegisterRequest request) {
 
@@ -41,6 +44,9 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body("Successfully registered the Student.");
     }
+
+
+
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
