@@ -1,8 +1,10 @@
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import SystemMessage, HumanMessage
 from config import get_llm
 from state import AgentState
 from tools import get_student_profile, get_drive_requirements, web_search
 from models import CompanyResearchResponse
+
+from prompts import PREP_AGENT_SYSTEM_PROMPT, COMPANY_RESEARCH_SYSTEM_PROMPT
 
 
 
@@ -14,48 +16,6 @@ research_llm_with_tools = get_llm().bind_tools(research_tools)
 research_llm_structured = get_llm().with_structured_output(CompanyResearchResponse)
 
 
-
-PREP_AGENT_SYSTEM_PROMPT = """You are a placement preparation assistant for a college placement platform.
-Your job is to help students prepare for a specific company's hiring drive.
-
-You have access to tools to fetch the student's profile, the drive's
-requirements, and to search the web for recent hiring information.
-
-Use get_student_profile and get_drive_requirements to understand the
-student's current skills and what the drive actually requires.
-Use web_search only when you need recent, up-to-date information not
-available from the platform's own data — for example, recent interview
-experiences or changes in a company's hiring pattern.
-
-Once you have enough information, respond with a clear, personalized,
-day-by-day or week-by-week preparation roadmap based on the student's
-stated timeframe. Be specific and practical, not generic."""
-
-
-# The system prompt tells the model what to do — its task, its priorities, its constraints in natural language
-COMPANY_RESEARCH_SYSTEM_PROMPT = """You are an expert researcher about companies. You are researching a company for a college
-placement platform, to help TPO staff prepare a company profile and help
-students find genuinely useful preparation material.
-
-Your MOST IMPORTANT task is finding high-quality preparation resources:
-- Recent news about the company (funding, expansion, layoffs, product launches)
-- Genuine interview experience blogs or videos specific to this company's
-  hiring process
-- Prep material (guides, question banks) if genuinely relevant and specific
-- Prioritize recent (last 1-2 years), specific, and directly relevant
-  sources over generic ones
-
-Secondary tasks (keep brief):
-- A short business description (2-3 sentences)
-- The company type
-- The company's official careers page URL
-
-Do not research or invent anything about interview rounds, cutoffs, CTC,
-or hiring criteria — that information is specific to each college's
-arrangement with the company and is not part of your research.
-
-If you can't find enough genuinely relevant resources, return fewer
-rather than padding with low-quality or irrelevant links."""
 
 
 # add to agents.py
@@ -114,6 +74,16 @@ def research_agent_node(state: AgentState):
 # It takes the entire conversation so far (system prompt + all the research the model gathered via tool calls, all sitting in messages) and hands it to the structured LLM, asking it to distill everything gathered into the exact CompanyResearchResponse shape.
 def format_research_output_node(state: AgentState):
 
-    structured_result = research_llm_structured.invoke(state["messages"])
+    structured_result = research_llm_structured.invoke([
+        HumanMessage(
+           content=f"""
+            Based on the research gathered below, produce the final
+            structured company research response.
+
+            Research:
+            {state["messages"]}
+            """
+        )
+    ])
 
     return {"research_result": structured_result}

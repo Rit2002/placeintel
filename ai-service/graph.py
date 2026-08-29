@@ -39,15 +39,13 @@ def build_research_agent_graph():
 
     graph.add_node("agent",research_agent_node)
     graph.add_node("tools", ToolNode(research_tools))
-    graph.add_node("format_ouput", format_research_output_node)
+    graph.add_node("format_output", format_research_output_node)
 
     graph.set_entry_point("agent")
 
-    graph.add_conditional_edges(
-        "agent",
-        tools_condition,
-        {"tools" : "tools", END: "format_ouput"}
-    )
+    # If tools_condition returns END, route to format_output
+    graph.add_conditional_edges("agent", tools_condition,
+        {"tools" : "tools", END: "format_output"}) 
 
     graph.add_edge("tools", "agent")
     graph.add_edge("format_output", END)

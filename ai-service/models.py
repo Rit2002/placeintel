@@ -31,33 +31,97 @@ class ResourceTypeEnum(str, Enum):
     INTERVIEW_EXPERIENCE_BLOG = "INTERVIEW_EXPERIENCE_BLOG"
 
 
-# Field() here is a Pydantic function used to add extra information or validation rules to a model field.
+class ResourceTypeEnum(str, Enum):
+    RECENT_NEWS = "RECENT_NEWS"
+    DSA = "DSA"
+    TECHNICAL = "TECHNICAL"
+    APTITUDE = "APTITUDE"
+    BEHAVIOURAL = "BEHAVIOURAL"
+    HR = "HR"
+    INTERVIEW_EXPERIENCE = "INTERVIEW_EXPERIENCE"
+
+
+class ResourceFormatEnum(str, Enum):
+    VIDEO = "VIDEO"
+    PLAYLIST = "PLAYLIST"
+    ARTICLE = "ARTICLE"
+    PRACTICE_SHEET = "PRACTICE_SHEET"
+    QUESTION_BANK = "QUESTION_BANK"
+    INTERVIEW_EXPERIENCE = "INTERVIEW_EXPERIENCE"
+
+
+class ResourceCostEnum(str, Enum):
+    FREE = "FREE"
+    FREEMIUM = "FREEMIUM"
+
+
+
 class ResourceSuggestion(BaseModel):
     type: ResourceTypeEnum
+    format: ResourceFormatEnum
+    cost: ResourceCostEnum
     title: str
     url: str
-    relevance_note: str = Field(
-        description="One sentence on why this resource is useful for students preparing for this company"
-    )
+    relevance_note: str
+
+
+
+
+class RecentNews(BaseModel):
+    title: str
+    url: str
+    published_date: str
+    summary: str
+
+
 
 
 class CompanyResearchRequest(BaseModel):
     company_name: str
+    role : str
 
 
 # The Pydantic schema (CompanyResearchOutput) tells the model what shape the final answer must take
 
 class CompanyResearchResponse(BaseModel):
 
-    business_info: str = Field(description="4-5 sentences: what the company does, products, business model")
+    business_info: str = Field(
+        description=(
+            "2-3 concise sentences explaining what the company does, "
+            "its major products/services, and business model."
+        )
+    )
 
     company_type: CompanyTypeEnum
 
-    careers_page_url: str = Field(description="The company's official careers/jobs page URL. If the careers page url is not found provide company's official url")
+    careers_page_url: str = Field(
+        description=(
+            "The company's official careers/jobs page URL. "
+            "If not found, use the company's official website URL."
+        )
+    )
+
+    recent_news: list[RecentNews] = Field(
+        description=(
+            "Return 3-5 recent and relevant news items about the company, "
+            "preferably from the last 12 months. Include the title, URL, "
+            "publication date, and a concise summary of why each item is "
+            "relevant. Prioritize official announcements and reputable "
+            "news sources."
+        )
+    )
 
     suggested_resources: list[ResourceSuggestion] = Field(
-        description="PRIORITY: find 5-8 genuinely relevant, recent resources — "
-        "recent news, interview experience blogs/ youtube videos specific to "
-        "this company's hiring process. This is the most valuable part "
-        "of the research; spend the most search effort here."
+        description=(
+            "Return 8-12 genuinely useful resources for college placement "
+            "preparation for this company and the target role. Cover multiple "
+            "relevant categories such as DSA, technical, aptitude, behavioural, "
+            "HR, and interview experiences. Prefer company-specific and "
+            "role-specific resources. Include a useful mix of YouTube videos "
+            "or playlists, practice sheets, question banks, articles, and "
+            "first-hand interview experiences when high-quality resources "
+            "exist. Prefer recent resources, especially from the last 1-2 "
+            "years. Do not pad the list with generic or low-quality resources "
+            "just to reach the requested number."
+        )
     )
