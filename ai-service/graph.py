@@ -1,7 +1,7 @@
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from state import AgentState
-from agents import prep_agent_node, tools
+from agents import prep_agent_node, prep_tools, research_agent_node, format_research_output_node, research_tools
 
 
 # "ToolNode" is a ready-made node that knows how to look at a tool-call request from the LLM, find the matching Python function, call it, and format the result back into a message.
@@ -15,7 +15,7 @@ def build_prep_agent_graph():
 
     # Adding nodes
     graph.add_node("agent", prep_agent_node)
-    graph.add_node("tools", ToolNode(tools))
+    graph.add_node("tools", ToolNode(prep_tools))
 
     # Tells the graph "when someone calls .invoke(...), start execution at the "agent" node."
     graph.set_entry_point("agent")
@@ -32,6 +32,30 @@ def build_prep_agent_graph():
     # .compile() validates the graph structure (nodes exist, edges reference real nodes, entry point is set) and turns the declarative graph definition into an actual runnable object with an .invoke(...) method — this is the object we actually call from outside this file.
     return graph.compile()
 
+
+def build_research_agent_graph():
+
+    graph = StateGraph(AgentState)
+
+    graph.add_node("agent",research_agent_node)
+    graph.add_node("tools", ToolNode(research_tools))
+    graph.add_node("format_ouput", format_research_output_node)
+
+    graph.set_entry_point("agent")
+
+    graph.add_conditional_edges(
+        "agent",
+        tools_condition,
+        {"tools" : "tools", END: "format_ouput"}
+    )
+
+    graph.add_edge("tools", "agent")
+    graph.add_edge("format_output", END)
+
+    return graph.compile()
+
+
+research_agent = build_research_agent_graph()
 
 # This runs the builder function once, at module import time, and stores the compiled, ready-to-use graph in a module-level variable named prep_agent
 prep_agent = build_prep_agent_graph()
