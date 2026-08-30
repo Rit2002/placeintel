@@ -1,11 +1,19 @@
 from fastapi import FastAPI
 from langchain_core.messages import HumanMessage
 
-from graph import prep_agent
+from graph import prep_agent, research_agent
 from agents import extract_text
-from models import PrepChatRequest, PrepChatResponse
+from models import( 
+    PrepChatRequest, 
+    PrepChatResponse,
+    CompanyResearchRequest,
+    SimplifiedResearchResponse
+)
+
+from research_mapper import simplify_research_response
 
 app = FastAPI(title="PlaceIntel AI Service")
+
 
 
 
@@ -35,3 +43,17 @@ def prep_chat(request: PrepChatRequest):
     final_content = result["messages"][-1].content
 
     return PrepChatResponse(reply=extract_text(final_content))
+
+
+
+
+@app.post("/research-company", response_model=SimplifiedResearchResponse)
+def research_company(request: CompanyResearchRequest):
+
+    result = research_agent.invoke({
+        "messages": [HumanMessage(
+            content=f"Research the company: {request.company_name}, target role: {request.role}"
+        )]
+    })
+
+    return simplify_research_response(result["research_result"])

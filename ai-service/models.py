@@ -24,11 +24,7 @@ class CompanyTypeEnum(str, Enum):
     OTHER = "OTHER"
 
 
-class ResourceTypeEnum(str, Enum):
-    NEWS = "NEWS"
-    PREP_MATERIAL = "PREP_MATERIAL"
-    INTERVIEW_EXPERIENCE_VIDEO = "INTERVIEW_EXPERIENCE_VIDEO"
-    INTERVIEW_EXPERIENCE_BLOG = "INTERVIEW_EXPERIENCE_BLOG"
+
 
 
 class ResourceTypeEnum(str, Enum):
@@ -41,6 +37,8 @@ class ResourceTypeEnum(str, Enum):
     INTERVIEW_EXPERIENCE = "INTERVIEW_EXPERIENCE"
 
 
+
+
 class ResourceFormatEnum(str, Enum):
     VIDEO = "VIDEO"
     PLAYLIST = "PLAYLIST"
@@ -50,9 +48,13 @@ class ResourceFormatEnum(str, Enum):
     INTERVIEW_EXPERIENCE = "INTERVIEW_EXPERIENCE"
 
 
+
+
 class ResourceCostEnum(str, Enum):
     FREE = "FREE"
     FREEMIUM = "FREEMIUM"
+
+
 
 
 
@@ -67,6 +69,8 @@ class ResourceSuggestion(BaseModel):
 
 
 
+
+
 class RecentNews(BaseModel):
     title: str
     url: str
@@ -76,9 +80,14 @@ class RecentNews(BaseModel):
 
 
 
+
+
 class CompanyResearchRequest(BaseModel):
     company_name: str
     role : str
+
+
+
 
 
 # The Pydantic schema (CompanyResearchOutput) tells the model what shape the final answer must take
@@ -125,3 +134,22 @@ class CompanyResearchResponse(BaseModel):
             "just to reach the requested number."
         )
     )
+
+
+
+
+
+class SimplifiedResource(BaseModel):
+    type: str      
+    title: str
+    url: str
+
+
+
+
+
+class SimplifiedResearchResponse(BaseModel):
+    business_info: str
+    company_type: str        
+    careers_page_url: str
+    resources: list[SimplifiedResource]
