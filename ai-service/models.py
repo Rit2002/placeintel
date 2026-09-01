@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -153,3 +154,53 @@ class SimplifiedResearchResponse(BaseModel):
     company_type: str        
     careers_page_url: str
     resources: list[SimplifiedResource]
+
+
+
+
+
+# ---------------- Mock Interview Agnet ----------------------
+
+
+class InterviewRoundType(str, Enum):
+    TECHNICAL = "TECHNICAL"
+    HR = "HR"
+    APTITUDE = "APTITUDE"
+    MANAGERIAL = "MANAGERIAL"
+
+
+class MockInterviewStartRequest(BaseModel):
+    company_id: str
+    student_id: str
+    round_type: InterviewRoundType
+
+
+class MockInterviewTurnRequest(BaseModel):
+    company_id: str
+    student_id: str
+    round_type: InterviewRoundType
+    conversation_history: list[dict]  # full transcript so far, sent back by frontend each turn
+    student_answer: str  # the student's latest answer (empty string for the very first call)
+
+
+class MockInterviewTurnResponse(BaseModel):
+    question_number: int         # 1 through 5
+    question: str                 # empty once interview is complete
+    is_complete: bool
+    evaluation: Optional["InterviewEvaluation"] = None   # only populated when is_complete = True
+    conversation_history: Optional[list[dict]] = None
+
+
+class QuestionFeedback(BaseModel):
+    question: str
+    answer_summary: str
+    strengths: str
+    improvement_areas: str
+
+
+class InterviewEvaluation(BaseModel):
+    overall_score: int = Field(description="0-100 overall performance score")
+    overall_feedback: str = Field(description="2-3 sentence summary of overall performance")
+    per_question_feedback: list[QuestionFeedback]
+    key_strengths: list[str]
+    key_improvement_areas: list[str]

@@ -50,6 +50,10 @@ public class ResourceService {
        );
     }
 
+
+
+
+
     @Transactional
     public ApiResponse<String> deleteResource(UUID resourceId) {
         if (!resourceRepository.existsById(resourceId)) {
@@ -65,6 +69,10 @@ public class ResourceService {
         );
     }
 
+
+
+
+
     public ApiResponse<List<ResourceResponse>> getCompanyResources(UUID companyId) {
         List<ResourceResponse> response = resourceRepository.findByCompanyId(companyId)
                 .stream()
@@ -78,6 +86,42 @@ public class ResourceService {
                 null
         );
     }
+
+
+
+    @Transactional
+    public ApiResponse<List<ResourceResponse>> addResourcesBulk(UUID companyId, List<ResourceRequest> requests, User tpo) {
+
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> new ResourceNotFound("Company not found: " + companyId));
+
+        /*
+        * Taking a list of requests and converting each request into a Resource object,
+        * then collecting all those objects into a List<Resource>.
+        * */
+        List<Resource> resources = requests.stream()
+                .map(req -> Resource.builder()
+                        .company(company)
+                        .type(req.resourceType())
+                        .title(req.title())
+                        .url(req.url())
+                        .addedByTpo(tpo)
+                        .build())
+                .toList();
+
+        List<ResourceResponse> saved = resourceRepository.saveAll(resources)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+
+        return new ApiResponse<>(
+                true,
+                saved.size() + " resources added", saved,
+                null
+        );
+    }
+
+
 
     // ------- Helper Method ---------
     public ResourceResponse toResponse(Resource resource) {

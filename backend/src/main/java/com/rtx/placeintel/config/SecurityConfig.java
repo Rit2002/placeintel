@@ -82,7 +82,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/placeintel/api/v1/auth/**",
                                 "/placeintel/api/v1/stats/homepage",
-                                "/placeintel/api/v1/internal/**"
+                                "/placeintel/api/v1/internal/**",
+                                "/api/students/me/mock-interview/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

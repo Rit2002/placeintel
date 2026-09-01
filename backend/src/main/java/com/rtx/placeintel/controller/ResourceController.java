@@ -1,6 +1,7 @@
 package com.rtx.placeintel.controller;
 
 import com.rtx.placeintel.dto.ApiResponse;
+import com.rtx.placeintel.dto.BulkResourceRequest;
 import com.rtx.placeintel.dto.ResourceRequest;
 import com.rtx.placeintel.dto.ResourceResponse;
 import com.rtx.placeintel.entity.User;
@@ -30,7 +31,7 @@ public class ResourceController {
 
 
 
-    @GetMapping("/companies/{companyId}/resources")
+    @GetMapping("/tpo/companies/{companyId}/resources")
     @PreAuthorize("hasAnyRole('STUDENT', 'TPO', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<ResourceResponse>>> getCompanyResources(@PathVariable UUID companyId) {
 
@@ -47,7 +48,7 @@ public class ResourceController {
 
     // ------- TPO-Only writes ---------
     // Create
-    @PostMapping("/companies/{companyId}/resources")
+    @PostMapping("/tpo/companies/{companyId}/resources")
     @PreAuthorize("hasRole('TPO')")
     public ResponseEntity<ApiResponse<ResourceResponse>> addResource(@PathVariable UUID companyId,
                                                         @Valid @RequestBody ResourceRequest req,
@@ -62,9 +63,30 @@ public class ResourceController {
     }
 
 
+    // Bulk resource create
+    @PostMapping("/tpo/companies/{companyId}/resources/bulk")
+    @PreAuthorize("hasRole('TPO')")
+    public ResponseEntity<ApiResponse<List<ResourceResponse>>> addResourcesBulk(
+            @PathVariable UUID companyId,
+            @Valid @RequestBody BulkResourceRequest req,
+            Authentication authentication) {
+
+
+        User tpo = currentUserResolver.resolve(authentication);
+
+        ApiResponse<List<ResourceResponse>> response =
+                resourceService.addResourcesBulk(companyId, req.resources(), tpo);
+
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
+
+
 
     // Delete
-    @DeleteMapping("/resources/{id}")
+    @DeleteMapping("/tpo/resources/{id}")
     @PreAuthorize("hasRole('TPO')")
     public ResponseEntity<ApiResponse<String>> deleteResource(@PathVariable UUID id) {
 

@@ -1,4 +1,4 @@
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from config import get_llm
 from state import AgentState
 from tools import get_student_profile, get_drive_requirements, web_search
@@ -87,3 +87,64 @@ def format_research_output_node(state: AgentState):
     ])
 
     return {"research_result": structured_result}
+
+
+
+
+# ------------------------ Mock Interview Agent -------------------------------
+from models import InterviewEvaluation
+
+from prompts import INTERVIEW_QUESTION_SYSTEM_PROMPT, INTERVIEW_EVALUATION_SYSTEM_PROMPT
+
+from message_utils import count_real_questions
+
+interview_tools = [get_drive_requirements, web_search]
+
+interview_llm_with_tools = get_llm().bind_tools(interview_tools)
+
+interview_llm_structured = get_llm().with_structured_output(InterviewEvaluation)
+
+
+
+
+
+def interview_question_node(state: AgentState):
+    
+    messages = state["messages"]
+
+    
+
+
+    question_number = count_real_questions(messages) + 1;
+
+    # strip out any existing system message, then prepend a fresh one
+    non_system_messages = [m for m in messages if not isinstance(m, SystemMessage)]
+
+    system_prompt = INTERVIEW_QUESTION_SYSTEM_PROMPT.format(
+        round_type=state["round_type"],
+        company_id=state["company_id"],
+        question_number=question_number,
+    )
+
+    # Creates a python list containing one element
+    # SystemMessage() : creates a LangChain SystemMessage object
+    full_messages = [SystemMessage(content=system_prompt)] + non_system_messages
+
+    response = interview_llm_with_tools.invoke(full_messages)
+
+    return {"messages": [response]}
+
+
+
+
+
+
+def interview_evaluation_node(state: AgentState):
+
+    messages = state["messages"]
+
+    if not any(isinstance(m, SystemMessage) for m in messages):
+        messages = [SystemMessage(content=INTERVIEW_EVALUATION_SYSTEM_PROMPT)] + messages
+
+    evaluation = interview_llm_structured.invoke(messages)
+    return {"interview_evaluation": evaluation}
