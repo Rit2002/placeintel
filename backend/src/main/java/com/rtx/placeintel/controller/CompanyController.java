@@ -100,7 +100,7 @@ public class CompanyController {
 
 
 
-    @GetMapping("/companies/all")
+    @GetMapping("/company/all")
     public ResponseEntity<ApiResponse<Page<CompanyResponse>>> getAllCompanies(@PageableDefault(size = 10)Pageable pageable) {
 
         ApiResponse<Page<CompanyResponse>> response = companyService.fetchAllCompanies(pageable);
@@ -112,7 +112,7 @@ public class CompanyController {
 
 
 
-    @GetMapping("/companies/search")
+    @GetMapping("/company/search")
     public ResponseEntity<ApiResponse<Page<CompanyReference>>> searchCompanies(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) CompanyType companyType,

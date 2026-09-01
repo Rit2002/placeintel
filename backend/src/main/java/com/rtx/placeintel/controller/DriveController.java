@@ -34,7 +34,7 @@ public class DriveController {
 
     //------ Reads ( Any Authenticated user) -----
 
-    @GetMapping("/drive/{id}")
+    @GetMapping("/company/drive/{id}")
     @PreAuthorize("hasAnyRole('STUDENT', 'TPO', 'ADMIN')")
     public ResponseEntity<ApiResponse<DriveResponse>> getDriveById(@PathVariable UUID id) {
 
@@ -45,7 +45,7 @@ public class DriveController {
                 .body(response);
     }
 
-    @GetMapping("/drives/search")
+    @GetMapping("/company/drive/search")
     public ResponseEntity<ApiResponse<Page<DriveResponse>>> searchDrives(
             @RequestParam(required = false) String skill,
             @RequestParam(required = false) String department,
@@ -80,7 +80,7 @@ public class DriveController {
 
     // ----- TPO-only writes ------
 
-    @PostMapping("/drive/{companyId}")
+    @PostMapping("/company/{companyId}/drive")
     @PreAuthorize("hasRole('TPO')")
     public ResponseEntity<ApiResponse<String>> createDrive(@PathVariable UUID companyId,
                                                            @Valid @RequestBody DriveRequest req,
@@ -98,7 +98,7 @@ public class DriveController {
 
 
 
-    @PutMapping("/drive/update/{id}")
+    @PutMapping("/company/drive/update/{id}")
     @PreAuthorize("hasRole('TPO')")
     public ResponseEntity<ApiResponse<String>> updateDrive(@PathVariable UUID id,
                                                            @Valid @RequestBody DriveRequest req) {
@@ -113,7 +113,7 @@ public class DriveController {
 
 
 
-    @DeleteMapping("/drive/delete/{id}")
+    @DeleteMapping("/company/drive/delete/{id}")
     @PreAuthorize("hasRole('TPO')")
     public ResponseEntity<ApiResponse<String>> deleteDrive(@PathVariable UUID id) {
 

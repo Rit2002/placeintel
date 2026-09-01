@@ -1,6 +1,7 @@
 package com.rtx.placeintel.config;
 
 import com.rtx.placeintel.security.JwtAuthFilter;
+import com.rtx.placeintel.security.VerificationGateFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +37,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+    private final VerificationGateFilter verificationGateFilter;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) {
@@ -82,8 +84,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/placeintel/api/v1/auth/**",
                                 "/placeintel/api/v1/stats/homepage",
-                                "/placeintel/api/v1/internal/**",
-                                "/api/students/me/mock-interview/**"
+                                "/placeintel/api/v1/internal/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -91,7 +92,9 @@ public class SecurityConfig {
                 /* UsernamePasswordAuthenticationFilter is Spring's default filter for form-login-style authentication
                 * addFilterBefore inserts your jwtAuthFilter to run before it
                 * */
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                 // Runs verificationGateFilter immediately after JwtAuthFilter in the security filter chain.
+                .addFilterAfter(verificationGateFilter, JwtAuthFilter.class);
 
         return http.build();
     }
