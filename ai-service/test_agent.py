@@ -23,20 +23,20 @@
 #     print(result["research_result"])
 
 
-from prompts import INTERVIEW_QUESTION_SYSTEM_PROMPT
-from graph import interview_question_agent
+# from prompts import INTERVIEW_QUESTION_SYSTEM_PROMPT
+# from graph import interview_question_agent
 
 
-if __name__ == "__main__":
-    from langchain_core.messages import HumanMessage
+# if __name__ == "__main__":
+#     from langchain_core.messages import HumanMessage
 
-    result = interview_question_agent.invoke({
-        "messages": [
-            HumanMessage(content="Begin the interview.")
-        ],
-        "round_type": "TECHNICAL",
-        "company_id": "ef40628b-a253-4512-a227-a95936640425",
-        "question_number": 1,
-    })
+#     result = interview_question_agent.invoke({
+#         "messages": [
+#             HumanMessage(content="Begin the interview.")
+#         ],
+#         "round_type": "TECHNICAL",
+#         "company_id": "ef40628b-a253-4512-a227-a95936640425",
+#         "question_number": 1,
+#     })
 
-    print(result["messages"][-1].content)
+#     print(result["messages"][-1].content)

@@ -4,6 +4,7 @@ import com.rtx.placeintel.dto.ApiResponse;
 import com.rtx.placeintel.dto.PrepChatResponse;
 import com.rtx.placeintel.dto.PrepChatUserRequest;
 import com.rtx.placeintel.entity.User;
+import com.rtx.placeintel.security.RateLimiter;
 import com.rtx.placeintel.service.PrepAgentService;
 import com.rtx.placeintel.util.CurrentUserResolver;
 import jakarta.validation.Valid;
@@ -23,6 +24,7 @@ public class PrepAgentController {
 
     private final PrepAgentService prepAgentService;
     private final CurrentUserResolver currentUserResolver;
+    private final RateLimiter rateLimiter;
 
 
 
@@ -36,6 +38,17 @@ public class PrepAgentController {
 
         User student = currentUserResolver.resolve(authentication);
 
+        if(!rateLimiter.allowRequest(student.getId().toString())) {
+
+            return ResponseEntity
+                    .status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(new ApiResponse<>(
+                            false,
+                            "Too many requests. Please wait a moment and try again.",
+                            null,
+                            "RATE_LIMITED"
+                    ));
+        }
 
         ApiResponse<PrepChatResponse> response =
                 prepAgentService.chat(student, companyId, body.message());

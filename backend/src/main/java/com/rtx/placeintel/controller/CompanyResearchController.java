@@ -3,11 +3,15 @@ package com.rtx.placeintel.controller;
 import com.rtx.placeintel.dto.ApiResponse;
 import com.rtx.placeintel.dto.CompanyResearchApiRequest;
 import com.rtx.placeintel.dto.CompanyResearchApiResponse;
+import com.rtx.placeintel.entity.User;
+import com.rtx.placeintel.security.RateLimiter;
 import com.rtx.placeintel.service.CompanyResearchService;
+import com.rtx.placeintel.util.CurrentUserResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,12 +23,28 @@ import org.springframework.web.bind.annotation.RestController;
 public class CompanyResearchController {
 
     private final CompanyResearchService companyResearchService;
+    private final RateLimiter rateLimiter;
+    private final CurrentUserResolver currentUserResolver;
 
-    @PostMapping("/tpo/companies/research")
+    @PostMapping("/tpo/company/research")
     @PreAuthorize("hasRole('TPO')")
     public ResponseEntity<ApiResponse<CompanyResearchApiResponse>> research(
-            @RequestBody CompanyResearchApiRequest req) {
+            @RequestBody CompanyResearchApiRequest req,
+            Authentication authentication) {
 
+        User student = currentUserResolver.resolve(authentication);
+
+        if(!rateLimiter.allowRequest(student.getId().toString())) {
+
+            return ResponseEntity
+                    .status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(new ApiResponse<>(
+                            false,
+                            "Too many requests. Please wait a moment and try again.",
+                            null,
+                            "RATE_LIMITED"
+                    ));
+        }
 
         ApiResponse<CompanyResearchApiResponse> response =
                 companyResearchService.research(req.companyName(), req.role());
