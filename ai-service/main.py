@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from langchain_core.messages import HumanMessage, AIMessage
 
 from graph import(
@@ -21,6 +21,10 @@ from models import(
 
 from research_mapper import simplify_research_response
 from message_utils import count_real_questions, deserialize_history, serialize_history
+
+from google.genai.errors import ClientError
+
+
 
 app = FastAPI(title="PlaceIntel AI Service")
 
@@ -46,13 +50,22 @@ def prep_chat(request: PrepChatRequest):
         f"Student's question: {request.user_message}"
     )
 
-    result = prep_agent.invoke({
-        "messages": [HumanMessage(content=initial_content)]
-    })
+    try:
+        result = prep_agent.invoke({
+            "messages": [HumanMessage(content=initial_content)]
+        })
 
-    final_content = result["messages"][-1].content
+        final_content = result["messages"][-1].content
 
-    return PrepChatResponse(reply=extract_text(final_content))
+        return PrepChatResponse(reply=extract_text(final_content))
+    except ClientError as e:
+        if "RESOURCE_EXHAUSTED" in str(e):
+            raise HTTPException(
+                status_code=503,
+                detail="AI service is temporarily unavailable due to rate limits. Please try again shortly."
+            )
+        raise
+
 
 
 
@@ -60,13 +73,21 @@ def prep_chat(request: PrepChatRequest):
 @app.post("/research-company", response_model=SimplifiedResearchResponse)
 def research_company(request: CompanyResearchRequest):
 
-    result = research_agent.invoke({
-        "messages": [HumanMessage(
-            content=f"Research the company: {request.company_name}, target role: {request.role}"
-        )]
-    })
+    try:
+        result = research_agent.invoke({
+            "messages": [HumanMessage(
+                content=f"Research the company: {request.company_name}, target role: {request.role}"
+            )]
+        })
 
-    return simplify_research_response(result["research_result"])
+        return simplify_research_response(result["research_result"])
+    except ClientError as e:
+        if "RESOURCE_EXHAUSTED" in str(e):
+            raise HTTPException(
+                status_code=503,
+                detail="AI service is temporarily unavailable due to rate limits. Please try again shortly."
+            )
+        raise
 
 
 
@@ -93,20 +114,28 @@ def mock_interview_turn(request: MockInterviewTurnRequest):
             is_complete=True,
             evaluation=eval_result["interview_evaluation"],
         )
+    
+    try:
+        result = interview_question_agent.invoke({
+            "messages": messages,
+            "round_type": request.round_type.value,
+            "company_id": request.company_id,
+        })
 
-    result = interview_question_agent.invoke({
-        "messages": messages,
-        "round_type": request.round_type.value,
-        "company_id": request.company_id,
-    })
+        new_question = extract_text(result["messages"][-1].content)
 
-    new_question = extract_text(result["messages"][-1].content)
-
-    return MockInterviewTurnResponse(
-        question_number=questions_asked + 1,
-        question=new_question,
-        is_complete=False,
-        conversation_history=serialize_history(result["messages"]),
-    )
+        return MockInterviewTurnResponse(
+            question_number=questions_asked + 1,
+            question=new_question,
+            is_complete=False,
+            conversation_history=serialize_history(result["messages"]),
+        )
+    except ClientError as e:
+        if "RESOURCE_EXHAUSTED" in str(e):
+            raise HTTPException(
+                status_code=503,
+                detail="AI service is temporarily unavailable due to rate limits. Please try again shortly."
+            )
+        raise
 
 
