@@ -1,7 +1,6 @@
 package com.rtx.placeintel.service;
 
-import com.rtx.placeintel.dto.LoginRequest;
-import com.rtx.placeintel.dto.RegisterRequest;
+import com.rtx.placeintel.dto.*;
 import com.rtx.placeintel.entity.enums.Role;
 import com.rtx.placeintel.entity.StudentProfile;
 import com.rtx.placeintel.entity.User;
@@ -28,7 +27,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     @Transactional
-    public String registerStudent(@Valid  RegisterRequest request) {
+    public AuthResult registerStudent(@Valid  RegisterRequest request) {
 
         if(userRepository.existsByEmail(request.getEmail())) {
             throw new UserAlreadyExistsException("User already exists.");
@@ -54,10 +53,17 @@ public class AuthService {
 
         studentProfileRepository.save(profile);
 
-        return jwtUtil.generateToken(user.getEmail(), user.getRole());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+
+        return new AuthResult(token, user.getRole());
     }
 
-    public String loginStudent(LoginRequest request) {
+
+
+
+
+
+    public AuthResult loginStudent(LoginRequest request) {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
@@ -68,6 +74,8 @@ public class AuthService {
 
         System.out.println("USER ROLE ---------> " + user.getRole());
 
-        return jwtUtil.generateToken(user.getEmail(), user.getRole());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+
+        return new AuthResult(token, user.getRole());
     }
 }

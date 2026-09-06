@@ -10,6 +10,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -38,28 +39,36 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
 
         if(token != null && jwtUtil.isTokenValid(token)) {
-            String email = jwtUtil.extractEmail(token);
-            // It goes back to the database, fetches the current User row for that email, and rebuilds a fresh UserDetails object (username, password, authorities, enabled status).
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            try{
+                String email = jwtUtil.extractEmail(token);
+                // It goes back to the database, fetches the current User row for that email, and rebuilds a fresh UserDetails object (username, password, authorities, enabled status).
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-            /*
-            * 1) UsernamePasswordAuthenticationToken is a class — a concrete implementation of Spring Security's Authentication interface
-            * 2) Spring ships it as a ready-made class so you don't have to write your own Authentication implementation from scratch.
-            * 3) new UsernamePasswordAuthenticationToken(username, password) : new UsernamePasswordAuthenticationToken(username, password)
-            * 4) new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()) : This is the 3-arg constructor — used to represent an already-confirmed identity.
-            * isAuthenticated() [when you use any where in the code] returns true automatically because you supplied authorities (Spring treats "has authorities" as a signal that verification already happened).
-            * 5) isAuthenticated() :- It's a method. It belongs to the Authentication interface itself
-            * */
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                /*
+                 * 1) UsernamePasswordAuthenticationToken is a class — a concrete implementation of Spring Security's Authentication interface
+                 * 2) Spring ships it as a ready-made class so you don't have to write your own Authentication implementation from scratch.
+                 * 3) new UsernamePasswordAuthenticationToken(username, password) : new UsernamePasswordAuthenticationToken(username, password)
+                 * 4) new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()) : This is the 3-arg constructor — used to represent an already-confirmed identity.
+                 * isAuthenticated() [when you use any where in the code] returns true automatically because you supplied authorities (Spring treats "has authorities" as a signal that verification already happened).
+                 * 5) isAuthenticated() :- It's a method. It belongs to the Authentication interface itself
+                 * */
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-            // This attaches extra metadata about the HTTP request itself — things like the caller's remote IP address and session ID — onto the authentication token. Not used for the authentication decision itself, but useful later for logging, auditing, or security monitoring
-            authToken.setDetails((new WebAuthenticationDetailsSource().buildDetails(request)));
+                // This attaches extra metadata about the HTTP request itself — things like the caller's remote IP address and session ID — onto the authentication token. Not used for the authentication decision itself, but useful later for logging, auditing, or security monitoring
+                authToken.setDetails((new WebAuthenticationDetailsSource().buildDetails(request)));
 
 
-            //it registers this authentication token into Spring Security's SecurityContext for the current request thread. From this point forward, for the rest of this request's processing.
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-            System.out.println("Authorities set: " + authToken.getAuthorities());
+                //it registers this authentication token into Spring Security's SecurityContext for the current request thread. From this point forward, for the rest of this request's processing.
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("Authorities set: " + authToken.getAuthorities());
+
+            } catch (UsernameNotFoundException e) {
+                // Cookie references a user that no longer exists — treat as
+                // unauthenticated rather than failing the whole request.
+                SecurityContextHolder.clearContext();
+                SecurityContextHolder.clearContext();
+            }
 
         }
 
