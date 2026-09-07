@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
 
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -101,7 +102,14 @@ public class CompanyController {
 
 
     @GetMapping("/company/all")
-    public ResponseEntity<ApiResponse<Page<CompanyResponse>>> getAllCompanies(@PageableDefault(size = 10)Pageable pageable) {
+    public ResponseEntity<ApiResponse<Page<CompanyResponse>>> getAllCompanies(
+            /*
+            * Pageable is a special type Spring automatically constructs by reading page, size, and sort query parameters
+            * off the incoming request URL, via a built-in resolver — you don't declare @RequestParam int page yourself,
+            * Spring handles it invisibly.
+            * */
+            @PageableDefault(size = 10)Pageable pageable
+    ) {
 
         ApiResponse<Page<CompanyResponse>> response = companyService.fetchAllCompanies(pageable);
 
@@ -128,6 +136,28 @@ public class CompanyController {
                 .status(HttpStatus.OK)
                 .body(response);
 
+    }
+
+
+
+
+    @GetMapping("/company/eligible-search")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<Page<CompanyReference>>> searchEligibleCompanies(
+            @RequestParam(required = false) Double cgpa,
+            @RequestParam(required = false) Integer tenth,
+            @RequestParam(required = false) Integer twelfth,
+            @RequestParam(required = false) Integer backlogs,
+            @RequestParam(required = false) List<String> skills,
+            @RequestParam(required = false) CompanyType companyType,
+            @PageableDefault(size = 20, sort = "name") Pageable pageable
+    ) {
+        ApiResponse<Page<CompanyReference>> response =
+                companyService.searchEligibleCompanies(cgpa, tenth, twelfth, backlogs, skills, companyType, pageable);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
     }
 
 

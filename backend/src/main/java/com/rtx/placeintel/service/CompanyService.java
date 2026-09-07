@@ -32,6 +32,9 @@ public class CompanyService {
     private final StudentProfileService studentProfileService;
 
 
+
+
+
     // Register the company
     public ApiResponse<CompanyReference> createCompany(CompanyRequest req, Authentication auth) {
 
@@ -74,6 +77,9 @@ public class CompanyService {
     }
 
 
+
+
+
     // delete the company
     public ApiResponse<Void> deleteCompany(UUID companyId) {
 
@@ -91,6 +97,10 @@ public class CompanyService {
                 null
         );
     }
+
+
+
+
 
     // Update the company
     public ApiResponse<Void> updateCompany(UUID companyId, CompanyRequest req) {
@@ -116,6 +126,7 @@ public class CompanyService {
         );
 
     }
+
 
 
 
@@ -163,6 +174,8 @@ public class CompanyService {
 
 
 
+
+
     // Fetch ALL companies
     public ApiResponse<Page<CompanyResponse>> fetchAllCompanies(Pageable pageable) {
 
@@ -176,6 +189,8 @@ public class CompanyService {
                 null
         );
     }
+
+
 
 
 
@@ -197,6 +212,37 @@ public class CompanyService {
                 null
         );
     }
+
+
+
+
+
+
+    public ApiResponse<Page<CompanyReference>> searchEligibleCompanies(
+            Double cgpa, Integer tenth, Integer twelfth, Integer backlogs,
+            List<String> skills, CompanyType companyType, Pageable pageable
+    ) {
+
+        Specification<Company> spec = CompanySpecification.buildEligibilitySpec(
+                cgpa, tenth, twelfth, backlogs, skills, companyType
+        );
+
+
+        Page<CompanyReference> results = companyRepository.findAll(spec, pageable)
+                .map(this::toResponse);
+
+
+
+        return new ApiResponse<>(
+                true,
+                "Eligible companies fetched",
+                results,
+                null
+        );
+    }
+
+
+
 
 
     // Helper Methods
