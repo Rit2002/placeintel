@@ -1,7 +1,6 @@
 package com.rtx.placeintel.controller;
 
-import com.rtx.placeintel.dto.LoginRequest;
-import com.rtx.placeintel.dto.RegisterRequest;
+import com.rtx.placeintel.dto.*;
 import com.rtx.placeintel.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +26,11 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid  @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid  @RequestBody RegisterRequest request) {
 
-        String response = authService.registerStudent(request);
+        AuthResult response = authService.registerStudent(request);
 
-        ResponseCookie cookie = ResponseCookie.from("jwt", response)
+        ResponseCookie cookie = ResponseCookie.from("jwt", response.token())
                 .httpOnly(true) // prevents client side js to access the cookie, mitigates XSS attack
                 .secure(false) // true : sends the cookie over https
                 .sameSite("Lax")
@@ -39,21 +38,28 @@ public class AuthController {
                 .maxAge(Duration.ofDays(30))
                 .build();
 
+        AuthResponse authResponse = new AuthResponse(response.role().toString());
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body("Successfully registered the Student.");
+                .body(new ApiResponse<>(
+                        true,
+                        "Successfully registered the Student.",
+                        authResponse,
+                        null
+                ));
     }
 
 
 
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
 
-        String response = authService.loginStudent(request);
+        AuthResult response = authService.loginStudent(request);
 
-        ResponseCookie cookie = ResponseCookie.from("jwt", response)
+        ResponseCookie cookie = ResponseCookie.from("jwt", response.token())
                 .httpOnly(true)
                 .secure(false)
                 .sameSite("Lax")
@@ -61,10 +67,17 @@ public class AuthController {
                 .maxAge(Duration.ofDays(30))
                 .build();
 
+        AuthResponse authResponse = new AuthResponse(response.role().toString());
+
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body("Successfully logged in.");
+                .body(new ApiResponse<>(
+                        true,
+                        "Successfully Logged in.",
+                        authResponse,
+                        null
+                ));
 
     }
 }

@@ -71,6 +71,9 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+
+
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
 
@@ -86,6 +89,9 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
     }
+
+
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
@@ -106,7 +112,9 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler({UserAlreadyExistsException.class, DuplicateResourceException.class})
+
+
+    @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicateResources(DuplicateResourceException ex) {
 
 
@@ -122,6 +130,8 @@ public class GlobalExceptionHandler {
                 .body(response);
 
     }
+
+
 
 
     @ExceptionHandler
