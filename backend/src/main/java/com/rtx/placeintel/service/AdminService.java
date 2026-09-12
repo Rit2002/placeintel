@@ -28,6 +28,7 @@ public class AdminService {
         }
 
         User tpo = User.builder()
+                .fullName(req.fullName())
                 .email(req.email())
                 .password(passwordEncoder.encode(req.password()))
                 .role(Role.TPO)
@@ -38,7 +39,9 @@ public class AdminService {
 
         CreateTpoResponse response = new CreateTpoResponse(
                 saved.getId(),
+                saved.getFullName(),
                 saved.getEmail(),
+                saved.getRole(),
                 saved.isEnabled()
         );
 
