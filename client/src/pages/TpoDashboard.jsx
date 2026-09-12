@@ -3,7 +3,8 @@ import {
   getAllCompaniesForTpo,
   createCompany,
   updateCompany,
-  deleteCompany
+  deleteCompany,
+  getMyUserInfo
 } from '../api/tpoApi'
 
 const COMPANY_TYPES = [
@@ -20,6 +21,9 @@ const EMPTY_FORM = {
   businessInfo: '',
   companyType: ''
 }
+
+
+
 
 function CompanyFormModal({
   open,
@@ -55,6 +59,10 @@ function CompanyFormModal({
       }))
     }
   }
+
+
+
+
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -191,6 +199,10 @@ function CompanyFormModal({
 }
 
 
+
+
+
+
 function ConfirmDeleteModal({
   open,
   companyName,
@@ -254,6 +266,9 @@ function ConfirmDeleteModal({
 }
 
 
+
+
+
 function CompanyManagement() {
   const [companies, setCompanies] = useState([])
   const [loading, setLoading] = useState(true)
@@ -283,15 +298,26 @@ function CompanyManagement() {
     }
   }
 
+
+
+
+
   function openCreate() {
     setEditingCompany(null)
     setModalOpen(true)
   }
 
+
+
+
   function openEdit(company) {
     setEditingCompany(company)
     setModalOpen(true)
   }
+
+
+
+
 
   function closeFormModal() {
     if (!deleting) {
@@ -300,10 +326,15 @@ function CompanyManagement() {
     }
   }
 
+
+
+
   function requestDelete(company) {
     setDeleteError('')
     setDeleteTarget(company)
   }
+
+
 
   function cancelDelete() {
     if (deleting) return
@@ -311,6 +342,9 @@ function CompanyManagement() {
     setDeleteTarget(null)
     setDeleteError('')
   }
+
+
+
 
   async function confirmDelete() {
     if (!deleteTarget) return
@@ -334,6 +368,13 @@ function CompanyManagement() {
       setDeleting(false)
     }
   }
+
+
+
+
+
+
+
 
   return (
     <div className="card bg-base-100 shadow-sm">
@@ -455,22 +496,89 @@ function CompanyManagement() {
 }
 
 
+
+
+
+
+
+
+function TpoProfileCard() {
+  const [info, setInfo] = useState(null)
+
+  useEffect(() => {
+    getMyUserInfo().then((result) => setInfo(result.data)).catch(console.error)
+  }, [])
+
+  if (!info) return null
+
+  return (
+    <div className="card bg-base-100 shadow-sm">
+      <div className="card-body flex-row items-center gap-4">
+        <div className="w-14 h-14 rounded-full bg-primary text-primary-content flex items-center justify-center text-xl font-bold">
+          {info.fullName?.[0] || info.email[0].toUpperCase()}
+        </div>
+        <div>
+          <h2 className="font-semibold text-lg">{info.fullName || 'TPO'}</h2>
+          <p className="text-sm text-base-content/60">{info.email}</p>
+          <span className="badge badge-outline badge-sm mt-1">{info.role}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+
+
+
+
+function TpoNavbar() {
+  const [info, setInfo] = useState(null)
+
+  useEffect(() => {
+    getMyUserInfo().then((result) => setInfo(result.data)).catch(console.error)
+  }, [])
+
+  return (
+    <div className="navbar bg-base-100 border-b border-base-300 px-6">
+      <div className="flex-1 text-xl font-bold text-primary">
+        PlaceIntel — TPO
+      </div>
+
+      {info && (
+        <div className="flex-none">
+          <div className="dropdown dropdown-end">
+            <div tabIndex={0} role="button" className="btn btn-ghost gap-2 normal-case">
+              <div className="w-8 h-8 rounded-full bg-primary text-primary-content flex items-center justify-center text-sm font-bold">
+                {info.fullName?.[0] || info.email[0].toUpperCase()}
+              </div>
+              <span className="text-sm">{info.fullName || info.email}</span>
+            </div>
+            <ul tabIndex={0} className="menu dropdown-content bg-base-100 rounded-box z-10 mt-3 w-56 p-3 shadow border border-base-300">
+              <li className="px-2 py-1 text-xs text-base-content/50">{info.email}</li>
+              <li className="px-2"><span className="badge badge-outline badge-sm">{info.role}</span></li>
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
+
+
+
+
+
 function TpoDashboard() {
   return (
     <div className="min-h-screen bg-base-200">
+      <TpoNavbar />
 
-      {/* Navbar */}
-      <div className="navbar bg-base-100 border-b border-base-300 px-6">
-        <div className="flex-1 text-xl font-bold text-primary">
-          PlaceIntel — TPO
-        </div>
-      </div>
-
-      {/* Main Content */}
       <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col gap-6">
         <CompanyManagement />
       </div>
-
     </div>
   )
 }

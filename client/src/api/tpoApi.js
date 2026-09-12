@@ -29,3 +29,10 @@ export async function verifyStudent(studentProfileId, status, note) {
   const response = await axiosClient.patch(`/students/${studentProfileId}/verify`, { status, note })
   return response.data
 }
+
+
+
+export async function getMyUserInfo() {
+  const response = await axiosClient.get('/tpo/me')
+  return response.data
+}
