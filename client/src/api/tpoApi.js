@@ -36,3 +36,12 @@ export async function getMyUserInfo() {
   const response = await axiosClient.get('/tpo/me')
   return response.data
 }
+
+
+export async function createBulkResources(companyId, resourcePayload) {
+  const response = await axiosClient.post(
+    `/tpo/companies/${companyId}/resources/bulk`,
+    resourcePayload
+  )
+  return response.data
+}
