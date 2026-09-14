@@ -30,3 +30,16 @@ export async function getCompanyById(id) {
   const response = await axiosClient.get(`/company/${id}`)
   return response.data
 }
+
+
+
+export async function sendPrepMessage(companyId, message) {
+    const response = await axiosClient.post(
+        `/companies/${companyId}/prep-chat`,
+        {
+            message
+        }
+    )
+
+    return response.data
+}
