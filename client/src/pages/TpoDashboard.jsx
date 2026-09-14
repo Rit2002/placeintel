@@ -117,34 +117,44 @@ function TpoNavbar() {
 
 
 function TpoSidebar() {
-  const linkClass = ({ isActive }) =>
-    `block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-      isActive
-        ? 'bg-primary text-primary-content'
-        : 'hover:bg-base-200'
-    }`
 
-  return (
-    <div className="card bg-base-100 shadow-sm w-56 shrink-0 h-fit sticky top-6">
-      <div className="card-body p-3 gap-1">
+    const linkClass = ({ isActive }) =>
+        `block px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+            isActive
+                ? 'bg-primary text-primary-content'
+                : 'hover:bg-base-200'
+        }`
 
-        <NavLink
-          to="/tpo/companies"
-          className={linkClass}
-        >
-          Companies
-        </NavLink>
+    return (
+        <div className="card bg-base-100 shadow-sm w-40 shrink-0 h-fit sticky top-4">
 
-        <NavLink
-          to="/tpo/verification"
-          className={linkClass}
-        >
-          Pending Verifications
-        </NavLink>
+            <div className="card-body p-2 gap-0.5">
 
-      </div>
-    </div>
-  )
+                <NavLink
+                    to="/tpo/companies"
+                    className={linkClass}
+                >
+                    Companies
+                </NavLink>
+
+                <NavLink
+                    to="/tpo/verification"
+                    className={linkClass}
+                >
+                    Pending Verifications
+                </NavLink>
+
+                <NavLink
+                    to="/tpo/students"
+                    className={linkClass}
+                >
+                    Students
+                </NavLink>
+
+            </div>
+
+        </div>
+    )
 }
 
 
@@ -157,7 +167,7 @@ function TpoDashboard() {
     <div className="min-h-screen bg-base-200">
       <TpoNavbar />
 
-      <div className="max-w-6xl mx-auto px-6 py-8 flex gap-6">
+      <div className="w-full px-3 lg:px-5 py-6 flex gap-4">
         <TpoSidebar />
         <div className="flex-1">
           <Outlet />

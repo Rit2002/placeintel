@@ -30,8 +30,6 @@ public class Company {
 
     private  String logoUrl;
 
-    @Column(length = 1000)
-    private String shortDescription;
 
     @Column(length = 2000)
     private String businessInfo;

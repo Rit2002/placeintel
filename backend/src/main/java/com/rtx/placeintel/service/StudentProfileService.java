@@ -8,11 +8,14 @@ import com.rtx.placeintel.entity.StudentProfile;
 import com.rtx.placeintel.entity.User;
 import com.rtx.placeintel.entity.enums.VerificationStatus;
 import com.rtx.placeintel.exception.ResourceNotFound;
+import com.rtx.placeintel.repository.ApplicationRepository;
 import com.rtx.placeintel.repository.StudentProfileRepository;
+import com.rtx.placeintel.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +29,8 @@ public class StudentProfileService {
 
 
     private final StudentProfileRepository studentProfileRepository;
+    private final ApplicationRepository applicationRepository;
+    private final UserRepository userRepository;
 
 
 
@@ -136,6 +141,69 @@ public class StudentProfileService {
 
 
 
+
+
+
+
+
+
+    public ApiResponse<Page<StudentProfileResponse>> getAllStudents(Pageable pageable) {
+
+        Page<StudentProfile> profile = studentProfileRepository.findAll(pageable);
+
+        Page<StudentProfileResponse> response = profile
+                .map(this::toResponse);
+
+        return new ApiResponse<>(
+                true,
+                "successfully fetched Students",
+                response,
+                null
+        );
+    }
+
+
+
+
+
+
+
+    @Transactional
+    public ApiResponse<Void> deleteStudent(UUID studentId) {
+
+        StudentProfile profile = studentProfileRepository
+                .findById(studentId)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("Student profile not found")
+                );
+
+        User user = profile.getUser();
+
+        // Delete the applications first because they reference StudentProfile.
+        applicationRepository.deleteByStudentProfile(profile);
+
+        //Delete Student profile
+        studentProfileRepository.delete(profile);
+
+        //Delete the associated User
+        userRepository.delete(user);
+
+        return new ApiResponse<>(
+                true,
+                "Student deleted successfully",
+                null,
+                null
+        );
+    }
+
+
+
+
+
+
+
+
+
     // Helper Methods
     private StudentProfileResponse toResponse(StudentProfile p) {
 
@@ -175,5 +243,6 @@ public class StudentProfileService {
     private String normalize(String value) {
         return value == null ? null : value.trim().toUpperCase();
     }
+
 
 }

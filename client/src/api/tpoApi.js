@@ -45,3 +45,24 @@ export async function createBulkResources(companyId, resourcePayload) {
   )
   return response.data
 }
+
+
+
+export async function getAllStudents(page = 0, size = 20) {
+    const response = await axiosClient.get(
+        `/tpo/students?page=${page}&size=${size}`
+    )
+
+    return response.data
+}
+
+
+
+
+export async function deleteStudent(studentProfileId) {
+    const response = await axiosClient.delete(
+        `/tpo/students/${studentProfileId}`
+    )
+
+    return response.data
+}

@@ -8,7 +8,6 @@ public record CompanyReference(
         UUID id,
         String name,
         String logoUrl,
-        String shortDescription,
         String businessInfo,
         CompanyType companyType
 ) {

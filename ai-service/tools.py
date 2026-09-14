@@ -66,11 +66,17 @@ def web_search(query: str) -> str:
     when you need up-to-date information not available in the platform's
     own data — for example, recent interview experiences or changes in
     a company's hiring process."""
+    try:
+        results = _tavily.search(query=query, max_results=3)
 
-    results = _tavily.search(query=query, max_results=3)
-
-    formatted = "\n\n".join(
-        f"Source: {r['url']}\n{r['content']}" for r in results.get("results", [])
-    )
-    
-    return formatted or "No relevant results found."
+        formatted = "\n\n".join(
+            f"Source: {r['url']}\n{r['content']}" for r in results.get("results", [])
+        )
+        
+        return formatted or "No relevant results found."
+    except Exception as e:
+        print(f"Tavily search failed: {e}")
+        return {
+            "error": "Web search temporarily failed",
+            "query": query
+        }

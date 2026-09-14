@@ -51,7 +51,6 @@ public class CompanyService {
         Company company = Company.builder()
                 .name(req.getName())
                 .logoUrl(req.getLogoUrl())
-                .shortDescription(req.getShortDescription())
                 .businessInfo(req.getBusinessInfo())
                 .companyType(req.getCompanyType())
                 .createdByTpo(tpo)
@@ -63,7 +62,6 @@ public class CompanyService {
                 saved.getId(),
                 saved.getName(),
                 saved.getLogoUrl(),
-                saved.getShortDescription(),
                 saved.getBusinessInfo(),
                 saved.getCompanyType()
         );
@@ -112,7 +110,6 @@ public class CompanyService {
 
         company.setName(req.getName());
         company.setLogoUrl(req.getLogoUrl());
-        company.setShortDescription(req.getShortDescription());
         company.setBusinessInfo(req.getBusinessInfo());
         company.setCompanyType(req.getCompanyType());
 
@@ -156,7 +153,6 @@ public class CompanyService {
                 company.getId(),
                 company.getName(),
                 company.getLogoUrl(),
-                company.getShortDescription(),
                 company.getBusinessInfo(),
                 company.getCompanyType(),
                 drives,
@@ -275,7 +271,6 @@ public class CompanyService {
                 company.getId(),
                 company.getName(),
                 company.getLogoUrl(),
-                company.getShortDescription(),
                 company.getBusinessInfo(),
                 company.getCompanyType(),
                 driveResponses,
@@ -341,7 +336,6 @@ public class CompanyService {
                 company.getId(),
                 company.getName(),
                 company.getLogoUrl(),
-                company.getShortDescription(),
                 company.getBusinessInfo(),
                 company.getCompanyType()
         );
