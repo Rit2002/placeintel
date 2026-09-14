@@ -19,8 +19,6 @@ public class CompanyRequest {
     @NotNull(message = "Invalid company type")
     private CompanyType companyType;
 
-    @Size(min = 10, max = 1000, message = "Description is not of required length")
-    private String shortDescription;
 
     @Size(min = 10, max = 1000, message = "Description is not of required length")
     private String businessInfo;

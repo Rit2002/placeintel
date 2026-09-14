@@ -105,4 +105,39 @@ public class StudentProfileController {
 
 
 
+
+
+    @GetMapping("/tpo/students")
+    @PreAuthorize("hasRole('TPO')")
+    public ResponseEntity<ApiResponse<Page<StudentProfileResponse>>> getAllStudent(
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable
+    ) {
+
+        ApiResponse<Page<StudentProfileResponse>> response =
+                studentProfileService.getAllStudents(pageable);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
+
+
+
+
+
+    @DeleteMapping("/tpo/students/{studentProfileId}")
+    @PreAuthorize("hasRole('TPO')")
+    public ResponseEntity<ApiResponse<Void>> deleteStudent(
+            @PathVariable UUID studentProfileId) {
+
+        ApiResponse<Void> response =
+                studentProfileService.deleteStudent(studentProfileId);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
+
+
+
 }

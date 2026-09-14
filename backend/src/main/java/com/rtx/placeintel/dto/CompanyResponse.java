@@ -10,7 +10,6 @@ public record CompanyResponse(
         UUID id,
         String name,
         String logoUrl,
-        String shortDescription,
         String businessInfo,
         CompanyType companyType,
         List<DriveResponse> drives,

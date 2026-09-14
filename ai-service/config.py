@@ -12,7 +12,7 @@ INTERNAL_API_KEY = os.getenv("SPRING_INTERNAL_API_KEY")
 
 SPRING_BOOT_BASE_URL = "http://localhost:8080/placeintel/api/v1"
 
-MODEL_NAME = "gemini-3.6-flash"
+MODEL_NAME = "gemini-3.7-flash"
 
 
 def get_llm():
