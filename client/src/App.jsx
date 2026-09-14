@@ -1,29 +1,101 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from 'react-router-dom'
+
 import Login from './pages/Login'
-import Register from "./pages/Register";
+import Register from './pages/Register'
 import CompanyCatalog from './pages/CompanyCatalog'
 import CompanyDetail from './pages/CompanyDetails'
 import ProfileCompletion from './pages/ProfileCompletion'
-import TpoDashboard from './pages/TpoDashboard'
-import ProtectedRoute from './components/ProtectedRoute'
 
+import TpoDashboard from './pages/TpoDashboard'
+import TpoCompanies from './pages/TpoCompanies'
+import TpoVerification from './pages/TpoVerification'
+
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />}></Route> 
 
-      <Route path="/register" element={<Register />}></Route> 
+      {/* =========================
+          PUBLIC ROUTES
+      ========================== */}
 
-      <Route path="/companies" element={ <ProtectedRoute allowedRoles={['STUDENT']}><CompanyCatalog /></ProtectedRoute>}></Route> 
+      <Route
+        path="/"
+        element={<Navigate to="/login" replace />}
+      />
 
-      <Route path="/companies/:id" element={<ProtectedRoute allowedRoles={['STUDENT']}><CompanyDetail /></ProtectedRoute>}></Route>
+      <Route
+        path="/login"
+        element={<Login />}
+      />
 
-      <Route path="/profile" element={<ProtectedRoute allowedRoles={['STUDENT']}><ProfileCompletion /></ProtectedRoute>}></Route> 
+      <Route
+        path="/register"
+        element={<Register />}
+      />
 
-      <Route path="/tpo" element={<ProtectedRoute allowedRoles={['TPO']}><TpoDashboard /></ProtectedRoute>}></Route>      
+      {/* =========================
+          STUDENT ROUTES
+      ========================== */}
+
+      <Route
+        path="/companies"
+        element={
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <CompanyCatalog />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/companies/:id"
+        element={
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <CompanyDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute allowedRoles={['STUDENT']}>
+            <ProfileCompletion />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* =========================
+          TPO ROUTES
+      ========================== */}
+
+      <Route
+        path="/tpo"
+        element={
+          <ProtectedRoute allowedRoles={['TPO']}>
+            <TpoDashboard />
+          </ProtectedRoute>
+        }
+      >
+        <Route
+          index
+          element={<Navigate to="companies" replace />}
+        />
+
+        <Route
+          path="companies"
+          element={<TpoCompanies />}
+        />
+
+        <Route
+          path="verification"
+          element={<TpoVerification />}
+        />
+      </Route>
+
     </Routes>
   )
 }
 
-export default App;
+export default App
