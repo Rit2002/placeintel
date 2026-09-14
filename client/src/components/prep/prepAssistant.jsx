@@ -7,7 +7,7 @@ import { sendPrepMessage } from '../../api/companyApi'
 import {
     getPrepChat,
     savePrepChat,
-    clearPrepChat,
+    clearPrepChat
 } from '../../utils/prepStorage'
 
 
