@@ -20,15 +20,25 @@ function Login() {
 
     try {
       const result = await login(email, password)
-      setUser({ role: result.data.role })
+
+      // Backend returns student_id, not studentId
+      setUser({
+        role: result.data.role,
+        studentId: result.data.student_id
+      })
 
       if (result.data.role === 'STUDENT') {
         navigate('/companies')
       } else if (result.data.role === 'TPO') {
         navigate('/tpo')
       }
+
     } catch (err) {
-      setError('Invalid email or password')
+      console.error('Login failed:', err)
+      setError(
+        err.response?.data?.message ||
+        'Invalid email or password'
+      )
     } finally {
       setLoading(false)
     }
@@ -40,23 +50,35 @@ function Login() {
         <div className="card-body gap-4">
 
           <div className="text-center mb-2">
-            <h1 className="text-2xl font-bold text-primary">PlaceIntel</h1>
+            <h1 className="text-2xl font-bold text-primary">
+              PlaceIntel
+            </h1>
+
             <p className="text-sm text-base-content/60 mt-1">
               Sign in to continue
             </p>
           </div>
 
           {error && (
-            <div role="alert" className="alert alert-error py-2 text-sm">
+            <div
+              role="alert"
+              className="alert alert-error py-2 text-sm"
+            >
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-3"
+          >
 
             {/* Email */}
             <label className="form-control">
-              <span className="label-text text-sm mb-1">Email</span>
+              <span className="label-text text-sm mb-1">
+                Email
+              </span>
+
               <input
                 type="email"
                 placeholder="you@college.edu"
@@ -69,7 +91,9 @@ function Login() {
 
             {/* Password */}
             <label className="form-control">
-              <span className="label-text text-sm mb-1">Password</span>
+              <span className="label-text text-sm mb-1">
+                Password
+              </span>
 
               <div className="relative">
                 <input
@@ -81,11 +105,15 @@ function Login() {
                   required
                 />
 
-               <button
+                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-0 top-0 h-full px-3 flex items-center justify-center text-base-content/60 hover:text-base-content cursor-pointer"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={
+                    showPassword
+                      ? 'Hide password'
+                      : 'Show password'
+                  }
                 >
                   {showPassword ? (
                     // Eye Off
@@ -118,6 +146,7 @@ function Login() {
                         strokeLinejoin="round"
                         d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6-9.75-6-9.75-6z"
                       />
+
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -140,11 +169,16 @@ function Login() {
                 'Login'
               )}
             </button>
+
           </form>
 
           <p className="text-center text-sm text-base-content/60 mt-2">
             Don't have an account?{' '}
-            <Link to="/register" className="link link-primary">
+
+            <Link
+              to="/register"
+              className="link link-primary"
+            >
               Register
             </Link>
           </p>
