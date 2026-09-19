@@ -11,20 +11,33 @@ import TpoCompanies from "./pages/TpoCompanies";
 import TpoVerification from "./pages/TpoVerification";
 import TpoStudents from "./pages/TpoStudents";
 
+import MockInterview from "./pages/MockInterview";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <Routes>
+
       {/* =========================
           PUBLIC ROUTES
       ========================== */}
 
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route
+        path="/"
+        element={<Navigate to="/login" replace />}
+      />
 
-      <Route path="/login" element={<Login />} />
+      <Route
+        path="/login"
+        element={<Login />}
+      />
 
-      <Route path="/register" element={<Register />} />
+      <Route
+        path="/register"
+        element={<Register />}
+      />
+
 
       {/* =========================
           STUDENT ROUTES
@@ -57,6 +70,16 @@ function App() {
         }
       />
 
+      <Route
+        path="/mock-interview/:companyId"
+        element={
+          <ProtectedRoute allowedRoles={["STUDENT"]}>
+            <MockInterview />
+          </ProtectedRoute>
+        }
+      />
+
+
       {/* =========================
           TPO ROUTES
       ========================== */}
@@ -69,13 +92,27 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="companies" replace />} />
+        <Route
+          index
+          element={<Navigate to="companies" replace />}
+        />
 
-        <Route path="companies" element={<TpoCompanies />} />
+        <Route
+          path="companies"
+          element={<TpoCompanies />}
+        />
 
-        <Route path="verification" element={<TpoVerification />} />
-        <Route path="students" element={<TpoStudents />} />
+        <Route
+          path="verification"
+          element={<TpoVerification />}
+        />
+
+        <Route
+          path="students"
+          element={<TpoStudents />}
+        />
       </Route>
+
     </Routes>
   );
 }

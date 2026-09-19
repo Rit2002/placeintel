@@ -4,6 +4,7 @@ import com.rtx.placeintel.entity.enums.Role;
 
 public record AuthResult(
         String token,
-        Role role
+        Role role,
+        String student_id
 ) {
 }

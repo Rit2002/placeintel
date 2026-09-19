@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { getCompanyById } from '../api/companyApi'
 import Navbar from '../components/Navbar'
 import PrepAssistant from '../components/prep/prepAssistant'
@@ -20,6 +20,12 @@ function groupDrivesByYear(drives) {
 
   return groups
 }
+
+
+
+
+
+
 
 
 function RoundRow({ round }) {
@@ -83,9 +89,16 @@ function RoundRow({ round }) {
 }
 
 
+
+
+
+
+
+
 function CompanyDetail() {
 
   const { id } = useParams()
+  const navigate = useNavigate()
 
   const [company, setCompany] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -324,9 +337,35 @@ function CompanyDetail() {
 
           <div className="card-body">
 
-            <h2 className="card-title text-lg mb-3">
-              Drives
-            </h2>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+
+              <div>
+                <h2 className="card-title text-lg">
+                  Drives
+                </h2>
+
+                <p className="text-sm text-base-content/60 mt-1">
+                  Explore this company's hiring drives and interview rounds.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(`/mock-interview/${id}`, {
+                    state: {
+                      companyId: id,
+                      companyName: company.name
+                    }
+                  })
+                }
+                className="btn btn-primary btn-sm sm:btn-md rounded-xl gap-2 shrink-0"
+              >
+                <span className="text-base">✦</span>
+                Start Mock Interview
+              </button>
+
+            </div>
 
 
             {years.length === 0 ? (
@@ -376,7 +415,7 @@ function CompanyDetail() {
                         </h3>
 
 
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
 
                           <span className="badge badge-sm">
                             {drive.employmentType?.replace('_', ' ')}
@@ -578,6 +617,9 @@ function CompanyDetail() {
     </div>
   )
 }
+
+
+
 
 
 export default CompanyDetail

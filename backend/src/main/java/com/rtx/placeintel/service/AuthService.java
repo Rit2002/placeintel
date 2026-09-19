@@ -13,8 +13,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -51,11 +54,11 @@ public class AuthService {
                 .enrollmentNo(request.getEnrollmentNo())
                 .build();
 
-        studentProfileRepository.save(profile);
+        StudentProfile res = studentProfileRepository.save(profile);
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
-        return new AuthResult(token, user.getRole());
+        return new AuthResult(token, user.getRole(), res.getId().toString());
     }
 
 
@@ -72,10 +75,11 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalStateException("User not found"));
 
-        System.out.println("USER ROLE ---------> " + user.getRole());
+        StudentProfile profile = studentProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new UsernameNotFoundException("Student profile not found"));
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
-        return new AuthResult(token, user.getRole());
+        return new AuthResult(token, user.getRole(), profile.getId().toString());
     }
 }
