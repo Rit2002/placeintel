@@ -38,7 +38,10 @@ public class AuthController {
                 .maxAge(Duration.ofDays(30))
                 .build();
 
-        AuthResponse authResponse = new AuthResponse(response.role().toString());
+        AuthResponse authResponse = new AuthResponse(
+                response.role().toString(),
+                response.student_id()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -67,7 +70,10 @@ public class AuthController {
                 .maxAge(Duration.ofDays(30))
                 .build();
 
-        AuthResponse authResponse = new AuthResponse(response.role().toString());
+        AuthResponse authResponse = new AuthResponse(
+                response.role().toString(),
+                response.student_id()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.OK)
