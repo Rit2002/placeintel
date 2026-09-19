@@ -3,24 +3,31 @@ from agents import extract_text
 
 
 def deserialize_history(history: list[dict]) -> list:
-    role_to_class = {
-        "system": SystemMessage,
-        "assistant": AIMessage,
-        "human": HumanMessage,
-        "tool": ToolMessage,
-    }
 
     # here "m" represents one dictionary
     # role_to_class[m["role"]](content=m["content"]) == HumanMessage(content=m["content"])
     result = []
     for m in history:
-        if m["role"] == "tool":
+        role = m["role"]
+
+        if role == "tool":
             result.append(ToolMessage(
                 content=m["content"],
                 tool_call_id=m.get("tool_call_id", "unknown"),
+                name=m.get("name", "unknown")
             ))
-        else:
-            result.append(role_to_class[m["role"]](content=m["content"]))
+        elif role == "system":
+            result.append(SystemMessage(content=m["content"]))
+        
+        elif role == "human":
+            result.append(HumanMessage(content=m["content"]))
+
+        elif role == "assistant": 
+            tool_calls = m.get("tool_calls", [])
+            result.append(AIMessage(
+                content=m.get("content", ""),
+                tool_calls=tool_calls
+            ))
 
     return result
 
@@ -31,21 +38,33 @@ def deserialize_history(history: list[dict]) -> list:
 
 def serialize_history(messages: list) -> list[dict]:
 
-    role_map = {
-        SystemMessage: "system",
-        AIMessage: "assistant",
-        HumanMessage: "human",
-        ToolMessage: "tool"
-    }
+   
 
     serialized = []
 
     for m in messages:
-        entry = {"role": role_map[type(m)], "content": extract_text(m.content)}
-        if isinstance(m, ToolMessage):
-            entry["tool_call_id"] = m.tool_call_id
-        serialized.append(entry)
         
+        if isinstance(m, SystemMessage):
+            serialized.append({"role" : "system", "content" : extract_text(m.content)})
+        
+        elif isinstance(m, HumanMessage):
+            serialized.append({"role" : "human", "content" : extract_text(m.content)})
+
+        elif isinstance(m, ToolMessage):
+            serialized.append({
+                "role" : "tool",
+                "content" : extract_text(m.content),
+                "tool_call_id" : m.tool_call_id,
+                "name" : getattr(m, "name", None) or "unknown_tool",
+            })
+        
+        elif isinstance(m, AIMessage):
+            entry = {"role" : "assistant", "content" : extract_text(m.content)}
+            if m.tool_calls:
+                entry["tool_calls"] = m.tool_calls
+            serialized.append(entry)
+
+
     return serialized
 
 

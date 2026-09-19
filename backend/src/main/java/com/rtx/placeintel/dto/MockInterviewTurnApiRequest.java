@@ -10,7 +10,7 @@ public record MockInterviewTurnApiRequest(
         @JsonProperty("company_id") UUID companyId,
         @JsonProperty("student_id") UUID studentId,
         @JsonProperty("round_type") String roundType,
-        @JsonProperty("conversation_history") List<Map<String, String>> conversationHistory,
+        @JsonProperty("conversation_history") List<Map<String, Object>> conversationHistory,
         @JsonProperty("student_answer") String studentAnswer
 ) {}
 

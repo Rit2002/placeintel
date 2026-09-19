@@ -1,22 +1,22 @@
 import os
 
 from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
-
+from langchain_groq import ChatGroq
 
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 INTERNAL_API_KEY = os.getenv("SPRING_INTERNAL_API_KEY")
 
 SPRING_BOOT_BASE_URL = "http://localhost:8080/placeintel/api/v1"
 
-MODEL_NAME = "gemini-3.8-live"
+MODEL_NAME = "openai/gpt-oss-120b"
 
 
 def get_llm():
-    return ChatGoogleGenerativeAI(
+    return ChatGroq(
         model=MODEL_NAME,
-        google_api_key=GEMINI_API_KEY,
+        groq_api_key=GROQ_API_KEY,
+        temperature=0.2,
     )
