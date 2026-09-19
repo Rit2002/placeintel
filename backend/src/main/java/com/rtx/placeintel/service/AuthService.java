@@ -75,11 +75,18 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalStateException("User not found"));
 
-        StudentProfile profile = studentProfileRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new UsernameNotFoundException("Student profile not found"));
+        String stsId = null;
+
+        if(user.getRole() == Role.STUDENT) {
+
+            StudentProfile profile = studentProfileRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new UsernameNotFoundException("Student profile not found"));
+
+            stsId = profile.getId().toString();
+        }
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
-        return new AuthResult(token, user.getRole(), profile.getId().toString());
+        return new AuthResult(token, user.getRole(), stsId);
     }
 }
