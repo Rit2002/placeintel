@@ -8,7 +8,8 @@ from agents import(
     format_research_output_node,
     research_tools,
     interview_question_node,
-    interview_tools
+    interview_tools,
+    interview_evaluation_node
 )
 
 
@@ -92,7 +93,7 @@ def build_interview_evaluation_graph():
 
     graph = StateGraph(AgentState)
 
-    graph.add_node("evaluate", interview_question_node)
+    graph.add_node("evaluate", interview_evaluation_node)
 
     graph.set_entry_point("evaluate")
     graph.add_edge("evaluate", END)
