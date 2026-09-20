@@ -85,7 +85,7 @@ public class DriveService {
 
 
     @Transactional
-    public ApiResponse<String> updateDrive(UUID driveId, DriveRequest req) {
+    public ApiResponse<DriveResponse> updateDrive(UUID driveId, DriveRequest req) {
 
         Drive drive = driveRepository.findById(driveId)
                 .orElseThrow(() -> new ResourceNotFound("Drive don't exists"));
@@ -109,13 +109,17 @@ public class DriveService {
         drive.setMaxAllowedBacklogs(req.maxAllowedBacklogs());
         drive.setDriveDate(req.driveDate());
 
+        drive.getRounds().clear();
+
+        attachRounds(drive, req.rounds());
+
 
         Drive resp = driveRepository.save(drive);
 
         return new ApiResponse<>(
                 true,
                 "Successfully updated the drive",
-                resp.getId().toString(),
+                toResponse(resp),
                 null
         );
 
@@ -189,6 +193,30 @@ public class DriveService {
                 null
         );
     }
+
+
+
+
+
+
+
+    public ApiResponse<Page<DriveResponse>> getAllDrives(Pageable pageable) {
+
+        Page<DriveResponse> drives = driveRepository
+                .findAll(pageable)
+                .map(this::toResponse);
+
+        return new ApiResponse<>(
+                true,
+                "Drives fetched successfully",
+                drives,
+                null
+        );
+    }
+
+
+
+
 
 
 

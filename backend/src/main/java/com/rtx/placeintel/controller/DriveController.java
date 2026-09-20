@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,25 @@ public class DriveController {
 
 
     //------ Reads ( Any Authenticated user) -----
+
+    @GetMapping("/drive/all")
+    @PreAuthorize("hasRole('TPO')")
+    public ResponseEntity<ApiResponse<Page<DriveResponse>>> getAllDrives(
+            @PageableDefault(
+                    size = 20,
+                    sort = "driveDate",
+                    direction = Sort.Direction.DESC
+            )
+            Pageable pageable
+    ) {
+
+        ApiResponse<Page<DriveResponse>> response =
+                driveService.getAllDrives(pageable);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+    }
 
     @GetMapping("/company/drive/{id}")
     @PreAuthorize("hasAnyRole('STUDENT', 'TPO', 'ADMIN')")
@@ -100,10 +120,10 @@ public class DriveController {
 
     @PutMapping("/company/drive/update/{id}")
     @PreAuthorize("hasRole('TPO')")
-    public ResponseEntity<ApiResponse<String>> updateDrive(@PathVariable UUID id,
+    public ResponseEntity<ApiResponse<DriveResponse>> updateDrive(@PathVariable UUID id,
                                                            @Valid @RequestBody DriveRequest req) {
 
-        ApiResponse<String> response = driveService.updateDrive(id, req);
+        ApiResponse<DriveResponse> response = driveService.updateDrive(id, req);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
