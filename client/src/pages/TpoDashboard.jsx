@@ -2,12 +2,6 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { getMyUserInfo } from '../api/tpoApi'
 
-
-
-
-
-
-
 /* ============================================================
    TPO NAVBAR
 ============================================================ */
@@ -106,82 +100,72 @@ function TpoNavbar() {
   )
 }
 
-
-
-
-
-
-
-
-
-
-
 function TpoSidebar() {
 
-    const linkClass = ({ isActive }) =>
-        `block px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-            isActive
-                ? 'bg-primary text-primary-content'
-                : 'hover:bg-base-200'
-        }`
+  const linkClass = ({ isActive }) =>
+    `block px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+      isActive
+        ? 'bg-primary text-primary-content'
+        : 'hover:bg-base-200'
+    }`
 
-    return (
-        <div className="card bg-base-100 shadow-sm w-40 shrink-0 h-fit sticky top-4">
+  return (
+    <div className="card bg-base-100 shadow-sm w-40 shrink-0 h-fit sticky top-4">
 
-            <div className="card-body p-2 gap-0.5">
+      <div className="card-body p-2 gap-0.5">
 
-                <NavLink
-                    to="/tpo/companies"
-                    className={linkClass}
-                >
-                    Companies
-                </NavLink>
+        <NavLink
+          to="/tpo/companies"
+          className={linkClass}
+        >
+          Companies
+        </NavLink>
 
-                <NavLink
-                    to="/tpo/verification"
-                    className={linkClass}
-                >
-                    Pending Verifications
-                </NavLink>
+        <NavLink
+          to="/tpo/drives"
+          className={linkClass}
+        >
+          Drives
+        </NavLink>
 
-                <NavLink
-                    to="/tpo/students"
-                    className={linkClass}
-                >
-                    Students
-                </NavLink>
+        <NavLink
+          to="/tpo/verification"
+          className={linkClass}
+        >
+          Pending Verifications
+        </NavLink>
 
-            </div>
+        <NavLink
+          to="/tpo/students"
+          className={linkClass}
+        >
+          Students
+        </NavLink>
 
-        </div>
-    )
+      </div>
+
+    </div>
+  )
 }
-
-
-
-
-
 
 function TpoDashboard() {
   return (
     <div className="min-h-screen bg-base-200">
+
       <TpoNavbar />
 
       <div className="w-full px-3 lg:px-5 py-6 flex gap-4">
+
         <TpoSidebar />
+
         <div className="flex-1">
           <Outlet />
         </div>
+
       </div>
+
     </div>
   )
 }
 
 export default TpoDashboard
-
-
-
-
-
-
-

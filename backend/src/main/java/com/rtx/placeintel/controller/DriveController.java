@@ -98,6 +98,29 @@ public class DriveController {
     }
 
 
+
+    @GetMapping("/students/drives")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<Page<DriveResponse>>> getStudentDrives(
+            @PageableDefault(
+                    size = 20,
+                    sort = "driveDate",
+                    direction = Sort.Direction.DESC
+            )
+            Pageable pageable
+    ) {
+
+        ApiResponse<Page<DriveResponse>> response =
+                driveService.getAllDrives(pageable);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+
+
+
+
     // ----- TPO-only writes ------
 
     @PostMapping("/company/{companyId}/drive")
@@ -123,6 +146,7 @@ public class DriveController {
     public ResponseEntity<ApiResponse<DriveResponse>> updateDrive(@PathVariable UUID id,
                                                            @Valid @RequestBody DriveRequest req) {
 
+        System.out.println("Request reached the Drive Controller");
         ApiResponse<DriveResponse> response = driveService.updateDrive(id, req);
 
         return ResponseEntity

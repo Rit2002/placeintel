@@ -8,20 +8,19 @@ import ProfileCompletion from "./pages/ProfileCompletion";
 
 import TpoDashboard from "./pages/TpoDashboard";
 import TpoCompanies from "./pages/TpoCompanies";
+import TpoDriveManagement from "./pages/TpoDriveManagement";
 import TpoVerification from "./pages/TpoVerification";
 import TpoStudents from "./pages/TpoStudents";
 
 import MockInterview from "./pages/MockInterview";
+
+import StudentDrives from "./pages/StudentDrives";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <Routes>
-
-      {/* =========================
-          PUBLIC ROUTES
-      ========================== */}
 
       <Route
         path="/"
@@ -38,10 +37,7 @@ function App() {
         element={<Register />}
       />
 
-
-      {/* =========================
-          STUDENT ROUTES
-      ========================== */}
+      {/* Student routes */}
 
       <Route
         path="/companies"
@@ -57,6 +53,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["STUDENT"]}>
             <CompanyDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/drives"
+        element={
+          <ProtectedRoute allowedRoles={["STUDENT"]}>
+            <StudentDrives />
           </ProtectedRoute>
         }
       />
@@ -79,10 +84,7 @@ function App() {
         }
       />
 
-
-      {/* =========================
-          TPO ROUTES
-      ========================== */}
+      {/* TPO routes */}
 
       <Route
         path="/tpo"
@@ -92,6 +94,7 @@ function App() {
           </ProtectedRoute>
         }
       >
+
         <Route
           index
           element={<Navigate to="companies" replace />}
@@ -103,6 +106,11 @@ function App() {
         />
 
         <Route
+          path="drives"
+          element={<TpoDriveManagement />}
+        />
+
+        <Route
           path="verification"
           element={<TpoVerification />}
         />
@@ -111,6 +119,7 @@ function App() {
           path="students"
           element={<TpoStudents />}
         />
+
       </Route>
 
     </Routes>

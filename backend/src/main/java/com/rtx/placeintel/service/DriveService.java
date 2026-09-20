@@ -1,36 +1,36 @@
 package com.rtx.placeintel.service;
 
 import com.rtx.placeintel.dto.*;
-import com.rtx.placeintel.entity.Company;
-import com.rtx.placeintel.entity.Drive;
-import com.rtx.placeintel.entity.Round;
-import com.rtx.placeintel.entity.User;
+import com.rtx.placeintel.entity.*;
 import com.rtx.placeintel.entity.enums.DriveStatus;
 import com.rtx.placeintel.entity.enums.EmploymentType;
 import com.rtx.placeintel.exception.DuplicateResourceException;
 import com.rtx.placeintel.exception.ResourceNotFound;
+import com.rtx.placeintel.repository.ApplicationRepository;
 import com.rtx.placeintel.repository.CompanyRepository;
 import com.rtx.placeintel.repository.DriveRepository;
 import com.rtx.placeintel.service.spec.DriveSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DriveService {
 
     private final DriveRepository driveRepository;
     private final CompanyRepository companyRepository;
-
+    private final ApplicationRepository applicationRepository;
+    private final CloudinaryService cloudinaryService;
 
 
     @Transactional
@@ -65,6 +65,7 @@ public class DriveService {
                 .maxAllowedBacklogs(req.maxAllowedBacklogs())
                 .driveDate(req.driveDate())
                 .createdByTpo(tpo)
+                .status(req.status())
                 .build();
 
         attachRounds(drive, req.rounds());
@@ -84,12 +85,23 @@ public class DriveService {
 
 
 
+
+
+
+
+
     @Transactional
-    public ApiResponse<DriveResponse> updateDrive(UUID driveId, DriveRequest req) {
+    public ApiResponse<DriveResponse> updateDrive(
+            UUID driveId,
+            DriveRequest req
+    ) {
+
+        System.out.println("Request reached the Drive Service");
 
         Drive drive = driveRepository.findById(driveId)
-                .orElseThrow(() -> new ResourceNotFound("Drive don't exists"));
-
+                .orElseThrow(() ->
+                        new ResourceNotFound("Drive doesn't exist")
+                );
 
         drive.setRoleOffered(req.roleOffered());
         drive.setEmploymentType(req.employmentType());
@@ -97,33 +109,52 @@ public class DriveService {
         drive.setCtcOffered(req.ctcOffered());
         drive.setStipend(req.stipend());
         drive.setJobDescription(req.jobDescription());
-        drive.setRequiredSkills(req.requiredSkills());
-        drive.setEligibleDepartments(
-                req.eligibleDepartments() != null
-                        ? req.eligibleDepartments().stream().map(this::normalize).toList()
+
+        drive.setRequiredSkills(
+                req.requiredSkills() != null
+                        ? new ArrayList<>(req.requiredSkills())
                         : new ArrayList<>()
         );
+
+        drive.setEligibleDepartments(
+                req.eligibleDepartments() != null
+                        ? new ArrayList<>(
+                        req.eligibleDepartments()
+                                .stream()
+                                .map(this::normalize)
+                                .toList()
+                )
+                        : new ArrayList<>()
+        );
+
         drive.setCutoffCgpa(req.cutOffCgpa());
         drive.setCutOffTenthPercentage(req.cutOffTenthPercentage());
         drive.setCutOffTwelfthPercentage(req.cutOffTwelfthPercentage());
         drive.setMaxAllowedBacklogs(req.maxAllowedBacklogs());
         drive.setDriveDate(req.driveDate());
 
+        drive.setStatus(req.status());
+
         drive.getRounds().clear();
 
         attachRounds(drive, req.rounds());
 
-
-        Drive resp = driveRepository.save(drive);
+        driveRepository.saveAndFlush(drive);
 
         return new ApiResponse<>(
                 true,
                 "Successfully updated the drive",
-                toResponse(resp),
+                toResponse(drive),
                 null
         );
-
     }
+
+
+
+
+
+
+
 
 
 
@@ -135,11 +166,36 @@ public class DriveService {
             throw new ResourceNotFound("Drive Not Found for given Id");
         }
 
+        List<Application> applications = applicationRepository.findAllByDriveId(driveId);
+
+        List<String> resumePublicIds = applications.stream()
+                        .map(Application::getResumePublicId)
+                                .filter(Objects::nonNull)
+                                        .toList();
+
+        applicationRepository.deleteAll(applications);
+        applicationRepository.flush();
+
         driveRepository.deleteById(driveId);
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        for(String publicId : resumePublicIds) {
+                            try{
+                                cloudinaryService.deleteResume(publicId);
+                            } catch (Exception e) {
+                                log.warn("Could not delete resume {} from Cloudinary", publicId, e);
+                            }
+                        }
+                    }
+                }
+        );
 
         return new ApiResponse<>(
                 true,
-                "Successfully deleted the Drive.",
+                "Successfully deleted the drive and " + applications.size() + " application(s).",
                 null,
                 null
         );

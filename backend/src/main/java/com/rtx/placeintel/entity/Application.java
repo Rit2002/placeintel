@@ -43,4 +43,14 @@ public class Application {
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime appliedAt;
+
+    private String resumeUrl;
+
+    private String resumePublicId;
+
+    private String resumeFileName;
+
+    private String resumeContentType;
+
+    private Long resumeSize;
 }

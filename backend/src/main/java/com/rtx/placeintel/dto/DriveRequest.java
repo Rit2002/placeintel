@@ -1,5 +1,6 @@
 package com.rtx.placeintel.dto;
 
+import com.rtx.placeintel.entity.enums.DriveStatus;
 import com.rtx.placeintel.entity.enums.EmploymentType;
 import com.rtx.placeintel.entity.enums.WorkMode;
 import jakarta.validation.Valid;
@@ -17,6 +18,8 @@ public record DriveRequest(
 
         @NotNull
         EmploymentType employmentType,
+
+        DriveStatus status,
 
         WorkMode workMode,
 

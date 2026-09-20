@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ApplicationRepository extends JpaRepository<Application, UUID> {
@@ -18,6 +19,8 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     Page<Application> findByStudentProfileId(UUID studentProfileId, Pageable pageable);
 
     Page<Application> findByDriveId(UUID driveId, Pageable pageable);
+
+    List<Application> findAllByDriveId(UUID driveId);
 
     long countByStatus(ApplicationStatus status);
 }
