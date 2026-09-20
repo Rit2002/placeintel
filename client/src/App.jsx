@@ -8,6 +8,7 @@ import ProfileCompletion from "./pages/ProfileCompletion";
 
 import TpoDashboard from "./pages/TpoDashboard";
 import TpoCompanies from "./pages/TpoCompanies";
+import TpoDriveManagement from "./pages/TpoDriveManagement";
 import TpoVerification from "./pages/TpoVerification";
 import TpoStudents from "./pages/TpoStudents";
 
@@ -18,10 +19,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 function App() {
   return (
     <Routes>
-
-      {/* =========================
-          PUBLIC ROUTES
-      ========================== */}
 
       <Route
         path="/"
@@ -37,11 +34,6 @@ function App() {
         path="/register"
         element={<Register />}
       />
-
-
-      {/* =========================
-          STUDENT ROUTES
-      ========================== */}
 
       <Route
         path="/companies"
@@ -79,11 +71,6 @@ function App() {
         }
       />
 
-
-      {/* =========================
-          TPO ROUTES
-      ========================== */}
-
       <Route
         path="/tpo"
         element={
@@ -92,6 +79,7 @@ function App() {
           </ProtectedRoute>
         }
       >
+
         <Route
           index
           element={<Navigate to="companies" replace />}
@@ -103,6 +91,11 @@ function App() {
         />
 
         <Route
+          path="drives"
+          element={<TpoDriveManagement />}
+        />
+
+        <Route
           path="verification"
           element={<TpoVerification />}
         />
@@ -111,6 +104,7 @@ function App() {
           path="students"
           element={<TpoStudents />}
         />
+
       </Route>
 
     </Routes>

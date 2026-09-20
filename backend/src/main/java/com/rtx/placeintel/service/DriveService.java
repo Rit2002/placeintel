@@ -84,12 +84,21 @@ public class DriveService {
 
 
 
+
+
+
+
+
     @Transactional
-    public ApiResponse<DriveResponse> updateDrive(UUID driveId, DriveRequest req) {
+    public ApiResponse<DriveResponse> updateDrive(
+            UUID driveId,
+            DriveRequest req
+    ) {
 
         Drive drive = driveRepository.findById(driveId)
-                .orElseThrow(() -> new ResourceNotFound("Drive don't exists"));
-
+                .orElseThrow(() ->
+                        new ResourceNotFound("Drive doesn't exist")
+                );
 
         drive.setRoleOffered(req.roleOffered());
         drive.setEmploymentType(req.employmentType());
@@ -97,12 +106,24 @@ public class DriveService {
         drive.setCtcOffered(req.ctcOffered());
         drive.setStipend(req.stipend());
         drive.setJobDescription(req.jobDescription());
-        drive.setRequiredSkills(req.requiredSkills());
-        drive.setEligibleDepartments(
-                req.eligibleDepartments() != null
-                        ? req.eligibleDepartments().stream().map(this::normalize).toList()
+
+        drive.setRequiredSkills(
+                req.requiredSkills() != null
+                        ? new ArrayList<>(req.requiredSkills())
                         : new ArrayList<>()
         );
+
+        drive.setEligibleDepartments(
+                req.eligibleDepartments() != null
+                        ? new ArrayList<>(
+                        req.eligibleDepartments()
+                                .stream()
+                                .map(this::normalize)
+                                .toList()
+                )
+                        : new ArrayList<>()
+        );
+
         drive.setCutoffCgpa(req.cutOffCgpa());
         drive.setCutOffTenthPercentage(req.cutOffTenthPercentage());
         drive.setCutOffTwelfthPercentage(req.cutOffTwelfthPercentage());
@@ -113,17 +134,22 @@ public class DriveService {
 
         attachRounds(drive, req.rounds());
 
-
-        Drive resp = driveRepository.save(drive);
+        driveRepository.saveAndFlush(drive);
 
         return new ApiResponse<>(
                 true,
                 "Successfully updated the drive",
-                toResponse(resp),
+                toResponse(drive),
                 null
         );
-
     }
+
+
+
+
+
+
+
 
 
 
