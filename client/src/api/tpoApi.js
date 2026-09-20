@@ -144,3 +144,13 @@ export async function getAllStudents(page = 0, size = 20) {
 
   return response.data
 }
+
+
+
+
+
+
+
+
+
+

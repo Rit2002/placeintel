@@ -6,6 +6,7 @@ import com.rtx.placeintel.dto.RankedApplicationResponse;
 import com.rtx.placeintel.entity.*;
 import com.rtx.placeintel.entity.enums.DriveStatus;
 import com.rtx.placeintel.entity.enums.VerificationStatus;
+import com.rtx.placeintel.exception.BusinessRuleException;
 import com.rtx.placeintel.exception.DuplicateResourceException;
 import com.rtx.placeintel.exception.ResourceNotFound;
 import com.rtx.placeintel.repository.ApplicationRepository;
@@ -15,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,16 +46,17 @@ public class ApplicationService {
                                                   UUID driveId,
                                                   MultipartFile resume) throws IOException {
 
+
         StudentProfile profile = studentProfileRepository.findByUserId(student.getId())
                 .orElseThrow(() -> new ResourceNotFound("Student profile not found"));
 
 
         if (profile.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            throw new AccessDeniedException("Your profile must be verified before applying to drives");
+            throw new BusinessRuleException("Your profile must be verified before applying to drives");
         }
 
         if (!profile.isProfileCompleted()) {
-            throw new AccessDeniedException("Please complete your profile before applying");
+            throw new BusinessRuleException("Please complete your profile before applying");
         }
 
         Drive drive = driveRepository.findById(driveId)
@@ -64,7 +65,7 @@ public class ApplicationService {
 
         if(drive.getStatus() != DriveStatus.ONGOING) {
 
-            throw new AccessDeniedException("This drive is not currently accepting applications (status: " + drive.getStatus() + ")");
+            throw new BusinessRuleException("This drive is not currently accepting applications (status: " + drive.getStatus() + ")");
         }
 
 
@@ -74,7 +75,7 @@ public class ApplicationService {
 
         List<String> failedReasons = checkEligibility(profile, drive);
         if (!failedReasons.isEmpty()) {
-            throw new AccessDeniedException(
+            throw new BusinessRuleException(
                     "You do not meet this drive's eligibility criteria: " + String.join("; ", failedReasons));
         }
 
@@ -214,7 +215,8 @@ public class ApplicationService {
                 app.getStudentProfile().getFullName(),
                 app.getStudentProfile().getEnrollmentNo(),
                 app.getRuleBasedScore(),
-                app.getStatus()
+                app.getStatus(),
+                app.getResumeUrl()
         );
     }
 

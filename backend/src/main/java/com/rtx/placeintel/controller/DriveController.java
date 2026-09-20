@@ -146,6 +146,7 @@ public class DriveController {
     public ResponseEntity<ApiResponse<DriveResponse>> updateDrive(@PathVariable UUID id,
                                                            @Valid @RequestBody DriveRequest req) {
 
+        System.out.println("Request reached the Drive Controller");
         ApiResponse<DriveResponse> response = driveService.updateDrive(id, req);
 
         return ResponseEntity

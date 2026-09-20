@@ -14,6 +14,8 @@ import TpoStudents from "./pages/TpoStudents";
 
 import MockInterview from "./pages/MockInterview";
 
+import StudentDrives from "./pages/StudentDrives";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -35,6 +37,8 @@ function App() {
         element={<Register />}
       />
 
+      {/* Student routes */}
+
       <Route
         path="/companies"
         element={
@@ -49,6 +53,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["STUDENT"]}>
             <CompanyDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/drives"
+        element={
+          <ProtectedRoute allowedRoles={["STUDENT"]}>
+            <StudentDrives />
           </ProtectedRoute>
         }
       />
@@ -70,6 +83,8 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      {/* TPO routes */}
 
       <Route
         path="/tpo"

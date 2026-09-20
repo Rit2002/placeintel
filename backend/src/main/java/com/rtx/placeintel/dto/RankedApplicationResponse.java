@@ -9,5 +9,6 @@ public record RankedApplicationResponse(
         String studentName,
         String enrollmentNo,
         Double ruleBasedScore,
-        ApplicationStatus status
+        ApplicationStatus status,
+        String resumeUrl
 ) {}

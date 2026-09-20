@@ -45,7 +45,7 @@ public class CloudinaryService {
 
         options.put("resource_type", "raw");
         options.put("folder", "placeintel/resumes");
-        options.put("public_id", applicationId + "_resume");
+        options.put("public_id", applicationId + "_resume.pdf");
         options.put("overwrite", true);
 
         return cloudinary.uploader().upload(

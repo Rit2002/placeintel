@@ -19,6 +19,12 @@ const WORK_MODES = [
   'HYBRID'
 ]
 
+const DRIVE_STATUSES = [
+  'UPCOMING',
+  'ONGOING',
+  'CLOSED'
+]
+
 const ROUND_DIFFICULTIES = [
   'EASY',
   'MEDIUM',
@@ -48,6 +54,7 @@ const EMPTY_FORM = {
   cutOffTwelfthPercentage: '',
   maxAllowedBacklogs: '',
   driveDate: '',
+  status: 'UPCOMING',
   rounds: [{ ...EMPTY_ROUND }]
 }
 
@@ -121,6 +128,7 @@ function toPayload(form) {
     cutOffTwelfthPercentage: toNumberOrNull(form.cutOffTwelfthPercentage),
     maxAllowedBacklogs: toNumberOrNull(form.maxAllowedBacklogs),
     driveDate: form.driveDate,
+    status: form.status,
     rounds: form.rounds.map((round, index) => ({
       roundName: round.roundName.trim(),
       sequenceNumber: Number(round.sequenceNumber) || index + 1,
@@ -147,6 +155,7 @@ function formFromDrive(drive) {
     cutOffTwelfthPercentage: drive.cutOffTwelfthPercentage ?? '',
     maxAllowedBacklogs: drive.maxAllowedBacklogs ?? '',
     driveDate: drive.driveDate || '',
+    status: drive.status || 'UPCOMING',
     rounds: (drive.rounds || []).length
       ? drive.rounds
           .slice()
@@ -465,6 +474,25 @@ function DriveFormModal({
                   onChange={changeField('driveDate')}
                 />
               </Field>
+
+              {editingDrive && (
+                <Field
+                  label="Drive Status"
+                  hint="Change the current status of this placement drive."
+                >
+                  <select
+                    className={`${FIELD_CLASS} cursor-pointer`}
+                    value={form.status}
+                    onChange={changeField('status')}
+                  >
+                    {DRIVE_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {formatEnum(status)}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
 
               <Field label="CTC Offered">
                 <input
@@ -793,7 +821,136 @@ function DriveFormModal({
   )
 }
 
-function ApplicantsTable({ applicants, loading }) {
+function ConfirmDeleteDriveModal({ drive, deleting, onCancel, onConfirm }) {
+  useEffect(() => {
+    if (!drive) return
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape' && !deleting) onCancel()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [drive, deleting, onCancel])
+
+  if (!drive) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={() => {
+        if (!deleting) onCancel()
+      }}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-drive-title"
+        className="w-full max-w-md rounded-2xl border-2 border-base-content/10 bg-base-100 p-6 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h3 id="delete-drive-title" className="font-bold text-lg">
+          Delete this drive?
+        </h3>
+
+        <p className="mt-3 text-sm text-base-content/80">
+          <span className="font-semibold">
+            {drive.companyName || 'This company'}
+            {drive.roleOffered ? ` — ${drive.roleOffered}` : ''}
+          </span>{' '}
+          will be deleted permanently, along with every student application
+          and uploaded resume for it. This can't be undone.
+        </p>
+
+        <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+          <button
+            type="button"
+            className="btn btn-outline border-2"
+            onClick={onCancel}
+            disabled={deleting}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-error"
+            onClick={onConfirm}
+            disabled={deleting}
+          >
+            {deleting ? 'Deleting...' : 'Delete drive'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ResumePreviewModal({ resume, onClose }) {
+  useEffect(() => {
+    if (!resume) return
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') onClose()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [resume, onClose])
+
+  if (!resume) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Resume preview"
+        className="flex flex-col w-full max-w-4xl h-[85vh] rounded-2xl border-2 border-base-content/10 bg-base-100 shadow-2xl overflow-hidden"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-base-300">
+          <div className="min-w-0">
+            <h3 className="font-bold text-lg truncate">
+              {resume.studentName || 'Resume'}
+            </h3>
+            <p className="text-xs text-base-content/60">Resume preview</p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={resume.url}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-xs btn-outline"
+            >
+              Open in new tab
+            </a>
+            <button
+              type="button"
+              className="btn btn-sm btn-circle btn-ghost"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <iframe
+          src={resume.url}
+          title={`${resume.studentName || 'Student'} resume`}
+          className="flex-1 w-full bg-base-200"
+        />
+      </div>
+    </div>
+  )
+}
+
+function ApplicantsTable({ applicants, loading, onViewResume }) {
   if (loading) {
     return (
       <div className="flex justify-center py-10">
@@ -841,14 +998,18 @@ function ApplicantsTable({ applicants, loading }) {
               </td>
               <td>
                 {applicant.resumeUrl ? (
-                  <a
-                    href={applicant.resumeUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
                     className="btn btn-xs btn-outline"
+                    onClick={() =>
+                      onViewResume({
+                        url: applicant.resumeUrl,
+                        studentName: applicant.studentName
+                      })
+                    }
                   >
                     View Resume
-                  </a>
+                  </button>
                 ) : (
                   <span className="text-xs text-base-content/40">Not uploaded</span>
                 )}
@@ -879,6 +1040,8 @@ function TpoDriveManagement() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingDrive, setEditingDrive] = useState(null)
   const [deletingDriveId, setDeletingDriveId] = useState(null)
+  const [resumePreview, setResumePreview] = useState(null)
+  const [driveToDelete, setDriveToDelete] = useState(null)
 
   const selectedDrive = useMemo(
     () => drives.find((drive) => drive.id === selectedDriveId) || null,
@@ -918,14 +1081,19 @@ function TpoDriveManagement() {
     setError('')
 
     try {
+      // TPO page uses the TPO drive endpoint only.
       const result = await getAllDrives(drivePage, 20)
+
       const pageData = result?.data
       const content = pageData?.content || []
 
       setDrives(content)
       setDriveTotalPages(pageData?.totalPages || 0)
 
-      if (selectedDriveId && content.some((drive) => drive.id === selectedDriveId)) {
+      if (
+        selectedDriveId &&
+        content.some((drive) => drive.id === selectedDriveId)
+      ) {
         return
       }
 
@@ -937,10 +1105,19 @@ function TpoDriveManagement() {
         setApplicants([])
       }
     } catch (requestError) {
-      console.error('Failed to load drives:', requestError)
-      setError(getErrorMessage(requestError, 'Could not load drives.'))
+      console.error('Failed to load TPO drives:', requestError)
+
+      setError(
+        getErrorMessage(
+          requestError,
+          'Could not load drives.'
+        )
+      )
+
       setDrives([])
       setSelectedDriveId(null)
+      setApplicants([])
+      setDriveTotalPages(0)
     } finally {
       setLoadingDrives(false)
     }
@@ -1121,7 +1298,7 @@ function TpoDriveManagement() {
                         className="btn btn-sm btn-outline btn-error border-2 flex-1"
                         onClick={(event) => {
                           event.stopPropagation()
-                          handleDelete(drive)
+                          setDriveToDelete(drive)
                         }}
                         disabled={
                           deletingDriveId === drive.id
@@ -1285,7 +1462,7 @@ function TpoDriveManagement() {
                 Applicants {selectedDrive ? `— ${selectedDrive.companyName} / ${selectedDrive.roleOffered}` : ''}
               </h2>
               <p className="text-xs text-base-content/60 mt-1">
-                Ranked applicants for the selected drive. Resume links open in a new tab.
+                Ranked applicants for the selected drive. Click View Resume to preview a resume.
               </p>
             </div>
 
@@ -1310,6 +1487,7 @@ function TpoDriveManagement() {
               <ApplicantsTable
                 applicants={applicants}
                 loading={loadingApplicants}
+                onViewResume={setResumePreview}
               />
 
               {!loadingApplicants && applicantTotalPages > 0 && (
@@ -1348,6 +1526,24 @@ function TpoDriveManagement() {
         companies={companies}
         onClose={() => setFormOpen(false)}
         onSaved={loadDrives}
+      />
+
+      <ConfirmDeleteDriveModal
+        drive={driveToDelete}
+        deleting={
+          Boolean(driveToDelete) &&
+          deletingDriveId === driveToDelete.id
+        }
+        onCancel={() => setDriveToDelete(null)}
+        onConfirm={async () => {
+          await handleDelete(driveToDelete)
+          setDriveToDelete(null)
+        }}
+      />
+
+      <ResumePreviewModal
+        resume={resumePreview}
+        onClose={() => setResumePreview(null)}
       />
     </div>
   )

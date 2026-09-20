@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
 
 
         return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
+                .status(HttpStatus.FORBIDDEN)
                 .body(response);
 
     }
@@ -120,15 +120,30 @@ public class GlobalExceptionHandler {
 
         ApiResponse<Void> response = new ApiResponse<>(
                 false,
-                "Something went wrong.",
+                ex.getMessage(),
                 null,
-                ex.getMessage()
+                "An error occurred"
         );
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(response);
 
+    }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessRuleException ex) {
+
+        ApiResponse<Void> response = new ApiResponse<>(
+                false,
+                ex.getMessage(),
+                null,
+                "An error occurred"
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_CONTENT)
+                .body(response);
     }
 
 
@@ -140,9 +155,9 @@ public class GlobalExceptionHandler {
 
         ApiResponse<Void> response = new ApiResponse<>(
                 false,
-                "Something went wrong.",
+                ex.getMessage(),
                 null,
-                ex.getMessage()
+                "An error occurred"
         );
 
 
