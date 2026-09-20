@@ -15,7 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @RestController
@@ -33,14 +35,22 @@ public class ApplicationController {
 
 
 
-    @PostMapping("/students/me/applications/{driveId}")
+    @PostMapping(
+            value = "/students/me/applications/{driveId}",
+            consumes = "multipart/form-data"
+    )
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<ApiResponse<ApplicationResponse>> apply( @PathVariable UUID driveId,
-                                                                   Authentication authentication) {
+                                                                   @RequestPart("resume") MultipartFile resume,
+                                                                   Authentication authentication) throws IOException {
 
         User student = currentUserResolver.resolve(authentication);
 
-        ApiResponse<ApplicationResponse> response = applicationService.apply(student, driveId);
+        ApiResponse<ApplicationResponse> response = applicationService.apply(
+                student,
+                driveId,
+                resume
+        );
 
         return ResponseEntity
                 .status(HttpStatus.OK)

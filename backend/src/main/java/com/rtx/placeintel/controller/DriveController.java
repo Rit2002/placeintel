@@ -98,6 +98,29 @@ public class DriveController {
     }
 
 
+
+    @GetMapping("/students/drives")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<ApiResponse<Page<DriveResponse>>> getStudentDrives(
+            @PageableDefault(
+                    size = 20,
+                    sort = "driveDate",
+                    direction = Sort.Direction.DESC
+            )
+            Pageable pageable
+    ) {
+
+        ApiResponse<Page<DriveResponse>> response =
+                driveService.getAllDrives(pageable);
+
+        return ResponseEntity.ok(response);
+    }
+
+
+
+
+
+
     // ----- TPO-only writes ------
 
     @PostMapping("/company/{companyId}/drive")

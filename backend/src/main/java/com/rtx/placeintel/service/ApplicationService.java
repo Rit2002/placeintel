@@ -18,9 +18,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -33,12 +36,15 @@ public class ApplicationService {
     private final StudentProfileRepository studentProfileRepository;
     private final DriveRepository driveRepository;
     private final RankingService rankingService;
+    private final CloudinaryService cloudinaryService;
 
 
 
 
     @Transactional
-    public ApiResponse<ApplicationResponse> apply(User student, UUID driveId) {
+    public ApiResponse<ApplicationResponse> apply(User student,
+                                                  UUID driveId,
+                                                  MultipartFile resume) throws IOException {
 
         StudentProfile profile = studentProfileRepository.findByUserId(student.getId())
                 .orElseThrow(() -> new ResourceNotFound("Student profile not found"));
@@ -80,6 +86,22 @@ public class ApplicationService {
 
         Application saved = applicationRepository.save(application);
 
+        Map uploadResult = cloudinaryService.uploadResume(
+                resume,
+                saved.getId().toString()
+        );
+
+        saved.setResumeUrl(uploadResult.get("secure_url").toString());
+
+        saved.setResumePublicId(uploadResult.get("public_id").toString());
+
+        saved.setResumeFileName(resume.getOriginalFilename());
+
+        saved.setResumeContentType(resume.getContentType());
+
+        saved.setResumeSize(resume.getSize());
+
+        applicationRepository.save(saved);
 
         return new ApiResponse<>(
                 true,
