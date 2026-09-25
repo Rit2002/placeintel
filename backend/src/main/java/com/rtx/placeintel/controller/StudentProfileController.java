@@ -1,9 +1,6 @@
 package com.rtx.placeintel.controller;
 
-import com.rtx.placeintel.dto.ApiResponse;
-import com.rtx.placeintel.dto.CompleteProfileRequest;
-import com.rtx.placeintel.dto.StudentProfileResponse;
-import com.rtx.placeintel.dto.VerifyStudentRequest;
+import com.rtx.placeintel.dto.*;
 import com.rtx.placeintel.entity.User;
 import com.rtx.placeintel.service.StudentProfileService;
 import com.rtx.placeintel.util.CurrentUserResolver;
@@ -17,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.UUID;
 
 @RestController

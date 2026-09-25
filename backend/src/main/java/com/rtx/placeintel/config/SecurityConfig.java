@@ -5,6 +5,7 @@ import com.rtx.placeintel.security.VerificationGateFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -25,7 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /*
-* Tells Spring: "this class defines beans — don't just treat it as a regular class, scan it for @Bean methods and register their return values in the application context
+* Tells Spring: this class defines beans — don't just treat it as a regular class, scan it for @Bean methods and register their return values in the application context
 * */
 @Configuration
 /*
@@ -89,8 +90,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/placeintel/api/v1/auth/**",
-                                "/placeintel/api/v1/stats/homepage",
                                 "/placeintel/api/v1/internal/**"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/placeintel/api/v1/achievements"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

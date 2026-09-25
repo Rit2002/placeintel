@@ -39,9 +39,14 @@ export async function deleteCompany(id) {
 }
 
 
+/* ============================================================
+   DRIVES
+============================================================ */
 
-
-export async function getAllDrives(page = 0, size = 20) {
+export async function getAllDrives(
+  page = 0,
+  size = 20
+) {
   const response = await axiosClient.get(
     `/drive/all?page=${page}&size=${size}`
   )
@@ -49,7 +54,11 @@ export async function getAllDrives(page = 0, size = 20) {
   return response.data
 }
 
-export async function createDrive(companyId, driveData) {
+
+export async function createDrive(
+  companyId,
+  driveData
+) {
   const response = await axiosClient.post(
     `/company/${companyId}/drive`,
     driveData
@@ -58,7 +67,11 @@ export async function createDrive(companyId, driveData) {
   return response.data
 }
 
-export async function updateDrive(driveId, driveData) {
+
+export async function updateDrive(
+  driveId,
+  driveData
+) {
   const response = await axiosClient.put(
     `/company/drive/update/${driveId}`,
     driveData
@@ -67,6 +80,7 @@ export async function updateDrive(driveId, driveData) {
   return response.data
 }
 
+
 export async function deleteDrive(driveId) {
   const response = await axiosClient.delete(
     `/company/drive/delete/${driveId}`
@@ -74,6 +88,7 @@ export async function deleteDrive(driveId) {
 
   return response.data
 }
+
 
 export async function getDriveApplicants(
   driveId,
@@ -87,13 +102,28 @@ export async function getDriveApplicants(
   return response.data
 }
 
+
+/* ============================================================
+   TPO USER
+============================================================ */
+
 export async function getMyUserInfo() {
-  const response = await axiosClient.get('/tpo/me')
+  const response = await axiosClient.get(
+    '/tpo/me'
+  )
+
   return response.data
 }
 
 
-export async function createBulkResources(companyId, resourcePayload) {
+/* ============================================================
+   COMPANY RESOURCES
+============================================================ */
+
+export async function createBulkResources(
+  companyId,
+  resourcePayload
+) {
   const response = await axiosClient.post(
     `/tpo/companies/${companyId}/resources/bulk`,
     resourcePayload
@@ -102,7 +132,14 @@ export async function createBulkResources(companyId, resourcePayload) {
   return response.data
 }
 
-export async function getPendingStudents(page = 0) {
+
+/* ============================================================
+   STUDENTS
+============================================================ */
+
+export async function getPendingStudents(
+  page = 0
+) {
   const response = await axiosClient.get(
     `/tpo/students/pending?page=${page}&size=20`
   )
@@ -128,7 +165,9 @@ export async function verifyStudent(
 }
 
 
-export async function deleteStudent(studentProfileId) {
+export async function deleteStudent(
+  studentProfileId
+) {
   const response = await axiosClient.delete(
     `/tpo/students/${studentProfileId}`
   )
@@ -137,7 +176,10 @@ export async function deleteStudent(studentProfileId) {
 }
 
 
-export async function getAllStudents(page = 0, size = 20) {
+export async function getAllStudents(
+  page = 0,
+  size = 20
+) {
   const response = await axiosClient.get(
     `/tpo/students?page=${page}&size=${size}`
   )
@@ -146,11 +188,124 @@ export async function getAllStudents(page = 0, size = 20) {
 }
 
 
+/* ============================================================
+   PLACEMENT ACHIEVEMENTS
+============================================================ */
+
+/*
+ * Public endpoint
+ */
+export async function getPublicAchievements() {
+  const response = await axiosClient.get(
+    '/achievements'
+  )
+
+  return response.data
+}
 
 
+/*
+ * TPO-only create endpoint
+ *
+ * Backend expects:
+ *
+ * studentProfileId -> UUID
+ * companyName      -> String
+ * ctcOffered       -> Double
+ * image            -> MultipartFile
+ *
+ * Scalar multipart values are sent as application/json
+ * so Spring can deserialize them correctly.
+ */
+export async function createAchievement(
+  studentProfileId,
+  companyName,
+  ctcOffered,
+  image = null
+) {
+
+  const formData = new FormData()
 
 
+  formData.append(
+    'studentProfileId',
+    new Blob(
+      [
+        JSON.stringify(studentProfileId)
+      ],
+      {
+        type: 'application/json'
+      }
+    )
+  )
 
 
+  formData.append(
+    'companyName',
+    new Blob(
+      [
+        JSON.stringify(companyName.trim())
+      ],
+      {
+        type: 'application/json'
+      }
+    )
+  )
 
 
+  formData.append(
+    'ctcOffered',
+    new Blob(
+      [
+        JSON.stringify(Number(ctcOffered))
+      ],
+      {
+        type: 'application/json'
+      }
+    )
+  )
+
+
+  if (image) {
+
+    formData.append(
+      'image',
+      image,
+      image.name
+    )
+  }
+
+
+  /*
+   * IMPORTANT:
+   *
+   * Do NOT manually set:
+   *
+   * Content-Type: multipart/form-data
+   *
+   * Axios/browser will create the boundary automatically.
+   */
+
+  const response = await axiosClient.post(
+    '/tpo/achievements',
+    formData
+  )
+
+
+  return response.data
+}
+
+
+/*
+ * TPO-only delete endpoint
+ */
+export async function deleteAchievement(
+  achievementId
+) {
+
+  const response = await axiosClient.delete(
+    `/tpo/achievements/${achievementId}`
+  )
+
+  return response.data
+}

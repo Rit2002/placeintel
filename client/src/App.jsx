@@ -22,12 +22,13 @@ import TpoCompanies from './pages/TpoCompanies'
 import TpoDriveManagement from './pages/TpoDriveManagement'
 import TpoVerification from './pages/TpoVerification'
 import TpoStudents from './pages/TpoStudents'
+import TpoAchievements from './pages/TpoAchievements'
 
 
 import AdminLogin from './pages/AdminLogin'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminTpoManagement from './pages/AdminTpoManagement'
-
+import Home from './pages/Home'
 
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -35,6 +36,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 function NotFoundRedirect() {
 
     const location = useLocation()
+
 
     const isAdminArea =
         location.pathname.startsWith('/admin')
@@ -74,10 +76,7 @@ function App() {
             <Route
                 path="/"
                 element={
-                    <Navigate
-                        to="/login"
-                        replace
-                    />
+                    <Home />
                 }
             />
 
@@ -90,6 +89,7 @@ function App() {
                 path="/login"
                 element={<Login />}
             />
+
 
             <Route
                 path="/register"
@@ -186,24 +186,34 @@ function App() {
                     }
                 />
 
+
                 <Route
                     path="companies"
                     element={<TpoCompanies />}
                 />
+
 
                 <Route
                     path="drives"
                     element={<TpoDriveManagement />}
                 />
 
+
                 <Route
                     path="verification"
                     element={<TpoVerification />}
                 />
 
+
                 <Route
                     path="students"
                     element={<TpoStudents />}
+                />
+
+
+                <Route
+                    path="achievements"
+                    element={<TpoAchievements />}
                 />
 
             </Route>
@@ -244,6 +254,7 @@ function App() {
                                 Admin Dashboard
                             </h1>
 
+
                             <p className="text-sm text-base-content/60 mt-1">
                                 Manage TPO accounts and administration.
                             </p>
@@ -252,6 +263,7 @@ function App() {
 
                     }
                 />
+
 
                 <Route
                     path="tpos"
@@ -269,6 +281,7 @@ function App() {
                 path="*"
                 element={<NotFoundRedirect />}
             />
+
 
         </Routes>
     )
