@@ -47,7 +47,7 @@ prep_llm_with_tools = get_llm().bind_tools(
 )
 
 
-def prep_agent_node(
+async def prep_agent_node(
     state: AgentState
 ):
 
@@ -67,7 +67,7 @@ def prep_agent_node(
             )
         ] + messages
 
-    response = prep_llm_with_tools.invoke(
+    response = await prep_llm_with_tools.ainvoke(
         messages
     )
 
@@ -279,7 +279,7 @@ interview_llm_structured = get_llm().with_structured_output(
 # INTERVIEW QUESTION
 # ============================================================
 
-def interview_question_node(
+async def interview_question_node(
     state: AgentState
 ):
 
@@ -319,7 +319,7 @@ def interview_question_node(
     ] + non_system_messages
 
     response = (
-        interview_llm_with_tools.invoke(
+        await interview_llm_with_tools.ainvoke(
             full_messages
         )
     )

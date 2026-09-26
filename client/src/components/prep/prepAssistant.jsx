@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
-import { sendPrepMessage } from '../../api/companyApi'
+import { streamPrepMessage } from '../../api/companyApi'
 
 import {
     getPrepChat,
@@ -10,6 +10,10 @@ import {
     clearPrepChat
 } from '../../utils/prepStorage'
 
+
+// ==================================================
+// MESSAGE FACTORY
+// ==================================================
 
 function createMessage(role, content) {
     return {
@@ -19,6 +23,288 @@ function createMessage(role, content) {
     }
 }
 
+
+// ==================================================
+// ERROR MESSAGE
+// ==================================================
+
+function errorMessageFor(err) {
+
+    if (err?.status === 429) {
+        return 'Too many requests. Please wait a moment and try again.'
+    }
+
+    if (err?.status === 403) {
+        return 'You are not allowed to use the preparation assistant.'
+    }
+
+    return err?.message || 'Something went wrong. Please try again.'
+}
+
+
+// ==================================================
+// MARKDOWN RENDERER
+// ==================================================
+
+function MarkdownContent({ content }) {
+    return (
+        <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+
+                // ------------------------------------------
+                // HEADINGS
+                // ------------------------------------------
+
+                h1: ({ children }) => (
+                    <h1 className="text-xl font-bold mt-6 mb-3 first:mt-0">
+                        {children}
+                    </h1>
+                ),
+
+                h2: ({ children }) => (
+                    <h2 className="text-lg font-bold mt-5 mb-2 first:mt-0">
+                        {children}
+                    </h2>
+                ),
+
+                h3: ({ children }) => (
+                    <h3 className="text-base font-semibold mt-4 mb-2 first:mt-0">
+                        {children}
+                    </h3>
+                ),
+
+                h4: ({ children }) => (
+                    <h4 className="font-semibold mt-3 mb-1.5 first:mt-0">
+                        {children}
+                    </h4>
+                ),
+
+                // ------------------------------------------
+                // PARAGRAPH
+                // ------------------------------------------
+
+                p: ({ children }) => (
+                    <p className="mb-3 leading-7 last:mb-0">
+                        {children}
+                    </p>
+                ),
+
+                // ------------------------------------------
+                // EMPHASIS
+                // ------------------------------------------
+
+                strong: ({ children }) => (
+                    <strong className="font-semibold">
+                        {children}
+                    </strong>
+                ),
+
+                em: ({ children }) => (
+                    <em>
+                        {children}
+                    </em>
+                ),
+
+                del: ({ children }) => (
+                    <del>
+                        {children}
+                    </del>
+                ),
+
+                // ------------------------------------------
+                // UNORDERED LIST
+                // ------------------------------------------
+
+                ul: ({ children }) => (
+                    <ul className="list-disc pl-6 mb-4 space-y-1.5">
+                        {children}
+                    </ul>
+                ),
+
+                // ------------------------------------------
+                // ORDERED LIST
+                // ------------------------------------------
+
+                ol: ({ children }) => (
+                    <ol className="list-decimal pl-6 mb-4 space-y-1.5">
+                        {children}
+                    </ol>
+                ),
+
+                // ------------------------------------------
+                // LIST ITEM
+                // ------------------------------------------
+
+                li: ({ children }) => (
+                    <li className="leading-7">
+                        {children}
+                    </li>
+                ),
+
+                // ------------------------------------------
+                // BLOCKQUOTE
+                // ------------------------------------------
+
+                blockquote: ({ children }) => (
+                    <blockquote className="border-l-4 border-base-300 pl-4 my-4 text-base-content/70">
+                        {children}
+                    </blockquote>
+                ),
+
+                // ------------------------------------------
+                // HORIZONTAL RULE
+                // ------------------------------------------
+
+                hr: () => (
+                    <hr className="my-5 border-base-300" />
+                ),
+
+                // ------------------------------------------
+                // LINKS
+                // ------------------------------------------
+
+                a: ({ href, children }) => (
+                    <a
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="link link-primary"
+                    >
+                        {children}
+                    </a>
+                ),
+
+                // ------------------------------------------
+                // TABLE
+                // ------------------------------------------
+
+                table: ({ children }) => (
+                    <div className="w-full overflow-x-auto my-4">
+                        <table className="w-full border-collapse text-sm">
+                            {children}
+                        </table>
+                    </div>
+                ),
+
+                thead: ({ children }) => (
+                    <thead className="bg-base-300">
+                        {children}
+                    </thead>
+                ),
+
+                tbody: ({ children }) => (
+                    <tbody>
+                        {children}
+                    </tbody>
+                ),
+
+                tr: ({ children }) => (
+                    <tr className="border-b border-base-300">
+                        {children}
+                    </tr>
+                ),
+
+                th: ({ children }) => (
+                    <th className="text-left font-semibold px-3 py-2 border border-base-300 whitespace-nowrap">
+                        {children}
+                    </th>
+                ),
+
+                td: ({ children }) => (
+                    <td className="align-top px-3 py-2 border border-base-300 break-words">
+                        {children}
+                    </td>
+                ),
+
+                // ------------------------------------------
+                // INLINE CODE + CODE BLOCK
+                // ------------------------------------------
+
+                code: ({ children, className }) => {
+
+                    const isInline =
+                        !className &&
+                        typeof children === 'string' &&
+                        !children.includes('\n')
+
+                    if (isInline) {
+                        return (
+                            <code
+                                className="
+                                    px-1.5
+                                    py-0.5
+                                    rounded
+                                    bg-base-300
+                                    text-sm
+                                    font-mono
+                                "
+                            >
+                                {children}
+                            </code>
+                        )
+                    }
+
+                    return (
+                        <code
+                            className={`
+                                block
+                                font-mono
+                                text-sm
+                                leading-6
+                                whitespace-pre
+                                ${className || ''}
+                            `}
+                        >
+                            {children}
+                        </code>
+                    )
+                },
+
+                pre: ({ children }) => (
+                    <pre
+                        className="
+                            my-4
+                            p-4
+                            rounded-xl
+                            bg-neutral
+                            text-neutral-content
+                            overflow-x-auto
+                            text-sm
+                            leading-6
+                        "
+                    >
+                        {children}
+                    </pre>
+                ),
+
+                // ------------------------------------------
+                // IMAGE
+                // ------------------------------------------
+
+                img: ({ src, alt }) => (
+                    <img
+                        src={src}
+                        alt={alt || ''}
+                        className="
+                            max-w-full
+                            h-auto
+                            rounded-xl
+                            my-4
+                        "
+                    />
+                ),
+            }}
+        >
+            {content}
+        </ReactMarkdown>
+    )
+}
+
+
+// ==================================================
+// PREP ASSISTANT
+// ==================================================
 
 function PrepAssistant({ companyId, companyName }) {
 
@@ -117,6 +403,106 @@ function PrepAssistant({ companyId, companyName }) {
 
 
     // ==================================================
+    // STREAM A REPLY INTO A GIVEN ASSISTANT MESSAGE
+    // ==================================================
+    //
+    // Shared by handleSendMessage and handleResend: streams
+    // tokens into the assistant bubble identified by
+    // assistantMessageId, growing it live instead of waiting
+    // for the full reply. On failure the (still-empty or
+    // partial) assistant bubble is removed and the user
+    // message is marked as failed/resendable.
+    // ==================================================
+
+    async function streamReplyInto(
+        trimmedMessage,
+        assistantMessageId,
+        userMessageId
+    ) {
+
+        let accumulated = ''
+        let receivedAnyToken = false
+
+        await streamPrepMessage(
+            companyId,
+            trimmedMessage,
+            {
+
+                onToken: (text) => {
+
+                    accumulated += text
+                    receivedAnyToken = true
+
+                    setIsLoading(false)
+
+                    setMessages(prev =>
+                        prev.map(item =>
+                            item.id === assistantMessageId
+                                ? {
+                                    ...item,
+                                    content: accumulated
+                                }
+                                : item
+                        )
+                    )
+                },
+
+                onDone: () => {
+
+                    setIsLoading(false)
+
+                    if (!receivedAnyToken) {
+
+                        /*
+                         * Stream closed with no tokens at all.
+                         */
+                        setMessages(prev =>
+                            prev.filter(
+                                item =>
+                                    item.id !== assistantMessageId
+                            )
+                        )
+
+                        setError(
+                            'The AI service returned an empty response.'
+                        )
+
+                        setFailedMessage({
+                            message: trimmedMessage,
+                            messageId: userMessageId,
+                        })
+                    }
+                },
+
+                onError: (err) => {
+
+                    console.error(
+                        'Prep assistant error:',
+                        err
+                    )
+
+                    setMessages(prev =>
+                        prev.filter(
+                            item =>
+                                item.id !== assistantMessageId
+                        )
+                    )
+
+                    setError(errorMessageFor(err))
+
+                    setFailedMessage({
+                        message: trimmedMessage,
+                        messageId: userMessageId,
+                    })
+
+                    setIsLoading(false)
+                },
+            }
+        )
+    }
+
+
+    // ==================================================
     // SEND MESSAGE
     // ==================================================
 
@@ -136,96 +522,25 @@ function PrepAssistant({ companyId, companyName }) {
             trimmedMessage
         )
 
+        const assistantMessage = createMessage(
+            'assistant',
+            ''
+        )
+
         setMessages(prev => [
             ...prev,
             userMessage,
+            assistantMessage,
         ])
 
         setMessage('')
         setIsLoading(true)
 
-        try {
-
-            const response = await sendPrepMessage(
-                companyId,
-                trimmedMessage
-            )
-
-            if (!response?.success) {
-                throw new Error(
-                    response?.message ||
-                    'Unable to generate a response.'
-                )
-            }
-
-            const reply = response?.data?.reply
-
-            if (!reply) {
-                throw new Error(
-                    'The AI service returned an empty response.'
-                )
-            }
-
-            const assistantMessage = createMessage(
-                'assistant',
-                reply
-            )
-
-            setMessages(prev => [
-                ...prev,
-                assistantMessage,
-            ])
-
-            setError(null)
-            setFailedMessage(null)
-
-        } catch (err) {
-
-            console.error(
-                'Prep assistant error:',
-                err
-            )
-
-            let errorMessage =
-                'Something went wrong. Please try again.'
-
-            if (err?.response?.status === 429) {
-
-                errorMessage =
-                    'Too many requests. Please wait a moment and try again.'
-
-            } else if (err?.response?.status === 403) {
-
-                errorMessage =
-                    'You are not allowed to use the preparation assistant.'
-
-            } else if (
-                err?.response?.data?.message
-            ) {
-
-                errorMessage =
-                    err.response.data.message
-
-            } else if (err?.message) {
-
-                errorMessage = err.message
-            }
-
-            setError(errorMessage)
-
-            /*
-             * Remember which message failed so the user
-             * can resend the same request.
-             */
-            setFailedMessage({
-                message: trimmedMessage,
-                messageId: userMessage.id,
-            })
-
-        } finally {
-
-            setIsLoading(false)
-        }
+        await streamReplyInto(
+            trimmedMessage,
+            assistantMessage.id,
+            userMessage.id
+        )
     }
 
 
@@ -240,89 +555,28 @@ function PrepAssistant({ companyId, companyName }) {
         }
 
         const trimmedMessage = failedMessage.message
+        const userMessageId = failedMessage.messageId
 
         setError(null)
         setFailedMessage(null)
+
+        const assistantMessage = createMessage(
+            'assistant',
+            ''
+        )
+
+        setMessages(prev => [
+            ...prev,
+            assistantMessage,
+        ])
+
         setIsLoading(true)
 
-        try {
-
-            const response = await sendPrepMessage(
-                companyId,
-                trimmedMessage
-            )
-
-            if (!response?.success) {
-                throw new Error(
-                    response?.message ||
-                    'Unable to generate a response.'
-                )
-            }
-
-            const reply = response?.data?.reply
-
-            if (!reply) {
-                throw new Error(
-                    'The AI service returned an empty response.'
-                )
-            }
-
-            const assistantMessage = createMessage(
-                'assistant',
-                reply
-            )
-
-            setMessages(prev => [
-                ...prev,
-                assistantMessage,
-            ])
-
-            setError(null)
-            setFailedMessage(null)
-
-        } catch (err) {
-
-            console.error(
-                'Prep assistant resend error:',
-                err
-            )
-
-            let errorMessage =
-                'Something went wrong. Please try again.'
-
-            if (err?.response?.status === 429) {
-
-                errorMessage =
-                    'Too many requests. Please wait a moment and try again.'
-
-            } else if (err?.response?.status === 403) {
-
-                errorMessage =
-                    'You are not allowed to use the preparation assistant.'
-
-            } else if (
-                err?.response?.data?.message
-            ) {
-
-                errorMessage =
-                    err.response.data.message
-
-            } else if (err?.message) {
-
-                errorMessage = err.message
-            }
-
-            setError(errorMessage)
-
-            setFailedMessage({
-                message: trimmedMessage,
-                messageId: failedMessage.messageId,
-            })
-
-        } finally {
-
-            setIsLoading(false)
-        }
+        await streamReplyInto(
+            trimmedMessage,
+            assistantMessage.id,
+            userMessageId
+        )
     }
 
 
@@ -347,20 +601,6 @@ function PrepAssistant({ companyId, companyName }) {
         /*
          * Remove the selected message and everything
          * after it.
-         *
-         * Example:
-         *
-         * User A
-         * AI A
-         * User B  <-- Edit this
-         * AI B
-         *
-         * becomes:
-         *
-         * User A
-         * AI A
-         *
-         * User B's text goes into the input box.
          */
         setMessages(
             messages.slice(0, messageIndex)
@@ -395,10 +635,7 @@ function PrepAssistant({ companyId, companyName }) {
         }
 
         /*
-         * No window.confirm().
-         *
-         * The current company's conversation is cleared
-         * immediately.
+         * Clear the current company's saved conversation.
          */
         clearPrepChat(companyId)
 
@@ -758,9 +995,10 @@ function PrepAssistant({ companyId, companyName }) {
                                     flex
                                     mb-5
                                     min-w-0
-                                    ${isUser
-                                        ? 'justify-end'
-                                        : 'justify-start'
+                                    ${
+                                        isUser
+                                            ? 'justify-end'
+                                            : 'justify-start'
                                     }
                                 `}
                             >
@@ -769,9 +1007,10 @@ function PrepAssistant({ companyId, companyName }) {
                                     className={`
                                         min-w-0
                                         max-w-[92%]
-                                        ${isUser
-                                            ? 'items-end'
-                                            : 'items-start'
+                                        ${
+                                            isUser
+                                                ? 'items-end'
+                                                : 'items-start'
                                         }
                                         flex
                                         flex-col
@@ -807,39 +1046,37 @@ function PrepAssistant({ companyId, companyName }) {
                                         ) : (
 
                                             /*
-                                             * overflow-x-hidden prevents
-                                             * markdown content from creating
-                                             * a horizontal scrollbar.
+                                             * Explicit Markdown rendering.
+                                             *
+                                             * This handles:
+                                             * - headings
+                                             * - bold / italic
+                                             * - numbered lists
+                                             * - bullet lists
+                                             * - nested lists
+                                             * - tables
+                                             * - code blocks
+                                             * - inline code
+                                             * - blockquotes
+                                             * - links
+                                             * - horizontal rules
+                                             *
+                                             * The content is streamed into
+                                             * item.content and ReactMarkdown
+                                             * re-parses it automatically.
                                              */
                                             <div
                                                 className="
-                                                    prose
-                                                    prose-sm
-                                                    max-w-none
                                                     w-full
                                                     min-w-0
                                                     break-words
                                                     overflow-x-hidden
-                                                    [&_pre]:whitespace-pre-wrap
-                                                    [&_pre]:break-words
-                                                    [&_pre]:overflow-x-hidden
-                                                    [&_code]:break-words
-                                                    [&_table]:block
-                                                    [&_table]:w-full
-                                                    [&_table]:overflow-hidden
-                                                    [&_td]:break-words
-                                                    [&_th]:break-words
+                                                    text-sm
                                                 "
                                             >
-
-                                                <ReactMarkdown
-                                                    remarkPlugins={[
-                                                        remarkGfm,
-                                                    ]}
-                                                >
-                                                    {item.content}
-                                                </ReactMarkdown>
-
+                                                <MarkdownContent
+                                                    content={item.content}
+                                                />
                                             </div>
 
                                         )}
@@ -922,6 +1159,12 @@ function PrepAssistant({ companyId, companyName }) {
                     {/* ---------------------------------- */}
                     {/* LOADING */}
                     {/* ---------------------------------- */}
+
+                    {/*
+                        Only shown before the first token of a new
+                        reply arrives. streamReplyInto() flips
+                        isLoading off as soon as onToken fires.
+                    */}
 
                     {isLoading && (
 

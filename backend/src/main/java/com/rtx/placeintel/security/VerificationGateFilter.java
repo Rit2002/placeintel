@@ -1,6 +1,5 @@
 package com.rtx.placeintel.security;
 
-
 import com.rtx.placeintel.entity.StudentProfile;
 import com.rtx.placeintel.entity.User;
 import com.rtx.placeintel.entity.enums.Role;
@@ -26,22 +25,13 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-@Order(2) // is used to control the execution/order of multiple Spring components when Spring has to choose between them.
+@Order(2)
 public class VerificationGateFilter extends OncePerRequestFilter {
-
-
-
-
 
     private final UserRepository userRepository;
     private final StudentProfileRepository studentProfileRepository;
-    // AntPathMatcher is basically the URL pattern matching engine.
+
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-
-
-
-
-
 
     private static final List<String> PROTECTED_PATTERNS = List.of(
             "/placeintel/api/v1/company/*",
@@ -51,77 +41,96 @@ public class VerificationGateFilter extends OncePerRequestFilter {
             "/placeintel/api/v1/companies/*/prep-chat"
     );
 
-
-
-
-
-    // This method is a custom Spring Security filter.
-    // It intercepts an HTTP request & decides whether the request is allowed or NOT.
-
+    /*
+     * IMPORTANT FOR SSE
+     *
+     * VerificationGateFilter runs after JwtAuthFilter.
+     *
+     * During an SSE ASYNC dispatch we want this filter to see
+     * the authentication restored by JwtAuthFilter and perform
+     * the same verification check.
+     */
+    @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        return false;
+    }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        if(!isProtectedPath(request.getRequestURI())) {
+        if (!isProtectedPath(request.getRequestURI())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Authentication auth =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
 
-        if(auth == null || !auth.isAuthenticated()) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        Optional<User> userOpt = userRepository.findByEmail(auth.getName());
-
-        if(userOpt.isEmpty() || userOpt.get().getRole() != Role.STUDENT) {
-
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        Optional<StudentProfile> profileOpt = studentProfileRepository.findByUserId(userOpt.get().getId());
-
-        boolean verified = profileOpt.isPresent()
-                && profileOpt.get().getVerificationStatus() == VerificationStatus.VERIFIED;
         /*
-        * Checks if the student is present and is verified and if not send 403 forbidden response
-        * */
+         * If authentication isn't available, let the normal
+         * Spring Security authorization layer handle it.
+         */
+        if (auth == null || !auth.isAuthenticated()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        Optional<User> userOpt =
+                userRepository.findByEmail(auth.getName());
+
+        /*
+         * This verification gate is only applicable to STUDENTS.
+         * TPO and ADMIN requests continue normally.
+         */
+        if (userOpt.isEmpty()
+                || userOpt.get().getRole() != Role.STUDENT) {
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        Optional<StudentProfile> profileOpt =
+                studentProfileRepository.findByUserId(
+                        userOpt.get().getId()
+                );
+
+        boolean verified =
+                profileOpt.isPresent()
+                        && profileOpt.get().getVerificationStatus()
+                        == VerificationStatus.VERIFIED;
+
         if (!verified) {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            /*
-              {
-                  "success": false,
-                  "message": "Your profile must be verified by TPO before accessing this content",
-                  "data": null,
-                  "error": "UNVERIFIED_STUDENT"
-                }
-               */
-            response.getWriter().write(
-                    "{\"success\":false,\"message\":\"Your profile must be verified by TPO before accessing this content\",\"data\":null,\"error\":\"UNVERIFIED_STUDENT\"}"
+
+            response.setStatus(
+                    HttpServletResponse.SC_FORBIDDEN
             );
+
+            response.setContentType("application/json");
+
+            response.getWriter().write(
+                    "{\"success\":false,"
+                            + "\"message\":\"Your profile must be verified by TPO before accessing this content\","
+                            + "\"data\":null,"
+                            + "\"error\":\"UNVERIFIED_STUDENT\"}"
+            );
+
             return;
         }
 
         filterChain.doFilter(request, response);
-
     }
 
-
-
-
-    // Helper Methods
-    // Since isProtectedPath uses pathMatcher (an instance field), it needs an instance of VerificationGateFilter to run
     private boolean isProtectedPath(String uri) {
-        // Checks whether the given uri matches at least one pattern in PROTECTED_PATTERNS.
-        // EX: pathMatcher.match("/api/users/**", "/api/users/123")
-        return PROTECTED_PATTERNS.stream().anyMatch(
-                pattern -> pathMatcher.match(pattern, uri)
-        );
+
+        return PROTECTED_PATTERNS.stream()
+                .anyMatch(
+                        pattern -> pathMatcher.match(pattern, uri)
+                );
     }
 }

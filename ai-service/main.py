@@ -1,6 +1,12 @@
+import json
+
 from fastapi import (
     FastAPI,
     HTTPException,
+)
+
+from fastapi.responses import (
+    StreamingResponse,
 )
 
 from langchain_core.messages import (
@@ -16,11 +22,9 @@ from graph import (
 
 from models import (
     PrepChatRequest,
-    PrepChatResponse,
     CompanyResearchRequest,
     SimplifiedResearchResponse,
     MockInterviewTurnRequest,
-    MockInterviewTurnResponse,
 )
 
 from research_mapper import (
@@ -46,6 +50,12 @@ app = FastAPI(
 
 # ============================================================
 # ERROR HANDLING
+# ============================================================
+#
+# NOTE: this raises HTTPException, which only works for
+# normal (non-streaming) responses. Streaming routes cannot
+# use this once the response has started — see
+# `format_stream_error` below for the streaming equivalent.
 # ============================================================
 
 def handle_llm_error(
@@ -85,6 +95,62 @@ def handle_llm_error(
     )
 
 
+def is_rate_limit_error(
+    error: Exception
+) -> bool:
+
+    error_text = str(error)
+
+    return (
+        "413" in error_text
+        or "TPM" in error_text
+        or "Request too large" in error_text
+        or "rate limit" in error_text.lower()
+        or "RESOURCE_EXHAUSTED" in error_text
+    )
+
+
+def format_stream_error(
+    error: Exception
+) -> str:
+    """
+    Streaming equivalent of handle_llm_error.
+
+    The HTTP status/headers are already sent once a
+    StreamingResponse starts, so errors have to be
+    delivered as a final SSE event instead of an
+    HTTPException.
+    """
+
+    print(
+        f"LLM STREAM ERROR: {str(error)}"
+    )
+
+    if is_rate_limit_error(error):
+
+        message = (
+            "AI service request exceeded the current "
+            "model token/rate limit. Please try again "
+            "shortly."
+        )
+
+    else:
+
+        message = (
+            "AI service encountered an internal error."
+        )
+
+    payload = {
+        "type": "error",
+        "message": message,
+    }
+
+    return (
+        f"event: error\n"
+        f"data: {json.dumps(payload)}\n\n"
+    )
+
+
 # ============================================================
 # HEALTH
 # ============================================================
@@ -99,14 +165,19 @@ def health_check():
 
 
 # ============================================================
-# PREP CHAT
+# PREP CHAT (STREAMING)
+# ============================================================
+#
+# Streams raw answer tokens as they are generated.
+# Each SSE `data:` line is one chunk of the reply text.
+# The stream ends with a `data: [DONE]` sentinel, or an
+# `event: error` on failure.
+#
+# The non-streaming /prep-chat route has been removed —
+# this is now the only prep-chat endpoint.
 # ============================================================
 
-@app.post(
-    "/prep-chat",
-    response_model=PrepChatResponse,
-)
-def prep_chat(
+async def stream_prep_chat(
     request: PrepChatRequest
 ):
 
@@ -119,33 +190,83 @@ def prep_chat(
 
     try:
 
-        result = prep_agent.invoke(
+        async for event in prep_agent.astream_events(
             {
                 "messages": [
                     HumanMessage(
                         content=initial_content
                     )
                 ]
-            }
-        )
+            },
+            version="v2",
+        ):
 
-        final_content = (
-            result["messages"][-1].content
-        )
+            kind = event["event"]
 
-        return PrepChatResponse(
-            reply=extract_text(
-                final_content
-            )
-        )
+            # ------------------------------------------------
+            # Answer tokens.
+            #
+            # Tool-call chunks also fire "on_chat_model_stream"
+            # events but carry empty `.content`, so they are
+            # naturally skipped here.
+            # ------------------------------------------------
+
+            if kind == "on_chat_model_stream":
+
+                chunk = event["data"]["chunk"]
+
+                if chunk.content:
+
+                    # json.dumps() escapes any embedded
+                    # newlines in the token — raw `\n` in a
+                    # `data:` line would be invalid SSE
+                    # framing (it would look like a second,
+                    # prefix-less line and split the event).
+                    yield (
+                        f"data: {json.dumps(chunk.content)}\n\n"
+                    )
+
+            # ------------------------------------------------
+            # Optional: let the frontend show a
+            # "checking drive requirements..." style status
+            # while a tool call is in flight.
+            # ------------------------------------------------
+
+            elif kind == "on_tool_start":
+
+                yield (
+                    f"event: tool\n"
+                    f"data: {event['name']}\n\n"
+                )
+
+        yield "data: [DONE]\n\n"
 
     except Exception as e:
 
-        handle_llm_error(e)
+        yield format_stream_error(e)
+
+
+@app.post(
+    "/prep-chat"
+)
+async def prep_chat(
+    request: PrepChatRequest
+):
+
+    return StreamingResponse(
+        stream_prep_chat(request),
+        media_type="text/event-stream",
+    )
 
 
 # ============================================================
 # COMPANY RESEARCH
+# ============================================================
+#
+# Left as a single non-streaming response: the final output
+# is a structured object (CompanyResearchResponse) produced
+# via strict structured output, which does not token-stream
+# into a meaningful partial result.
 # ============================================================
 
 @app.post(
@@ -183,14 +304,29 @@ def research_company(
 
 
 # ============================================================
-# MOCK INTERVIEW
+# MOCK INTERVIEW (STREAMING)
+# ============================================================
+#
+# Streams the interview question as it is generated, then
+# sends one final `type: done` SSE event carrying the same
+# metadata the old MockInterviewTurnResponse carried
+# (question_number, is_complete, conversation_history,
+# evaluation). The client should accumulate `type: token`
+# events for live display, then read the final `type: done`
+# event for the authoritative state to persist/send back on
+# the next turn.
+#
+# The interview-complete branch (evaluation) is NOT streamed
+# token-by-token — InterviewEvaluation is structured output,
+# same reasoning as /research-company — but it is still
+# delivered as a single `type: done` SSE event so the client
+# only needs to speak one protocol.
+#
+# The non-streaming /mock-interview/turn route has been
+# removed — this is now the only mock-interview endpoint.
 # ============================================================
 
-@app.post(
-    "/mock-interview/turn",
-    response_model=MockInterviewTurnResponse,
-)
-def mock_interview_turn(
+async def stream_mock_interview_turn(
     request: MockInterviewTurnRequest
 ):
 
@@ -236,13 +372,15 @@ def mock_interview_turn(
         )
 
         # ----------------------------------------------------
-        # Interview complete.
+        # Interview complete: evaluate (not streamed
+        # token-by-token — see note above), send as one
+        # `done` event.
         # ----------------------------------------------------
 
         if questions_asked >= 5:
 
             eval_result = (
-                interview_evaluation_agent.invoke(
+                await interview_evaluation_agent.ainvoke(
                     {
                         "messages": messages,
                         "round_type": (
@@ -255,52 +393,113 @@ def mock_interview_turn(
                 )
             )
 
-            return MockInterviewTurnResponse(
-                question_number=5,
-                question="",
-                is_complete=True,
-                evaluation=(
+            payload = {
+                "type": "done",
+                "question_number": 5,
+                "question": "",
+                "is_complete": True,
+                "conversation_history": None,
+                "evaluation": (
                     eval_result[
                         "interview_evaluation"
-                    ]
+                    ].model_dump()
                 ),
-            )
+            }
+
+            yield f"data: {json.dumps(payload)}\n\n"
+            return
 
         # ----------------------------------------------------
-        # Generate next question.
+        # Generate next question, streamed token-by-token.
         # ----------------------------------------------------
 
-        result = (
-            interview_question_agent.invoke(
-                {
-                    "messages": messages,
-                    "round_type": (
-                        request.round_type.value
-                    ),
-                    "company_id": (
-                        request.company_id
-                    ),
-                }
+        final_state = None
+
+        async for event in interview_question_agent.astream_events(
+            {
+                "messages": messages,
+                "round_type": (
+                    request.round_type.value
+                ),
+                "company_id": (
+                    request.company_id
+                ),
+            },
+            version="v2",
+        ):
+
+            kind = event["event"]
+
+            if kind == "on_chat_model_stream":
+
+                chunk = event["data"]["chunk"]
+
+                if chunk.content:
+
+                    token_payload = {
+                        "type": "token",
+                        "text": chunk.content,
+                    }
+
+                    yield (
+                        f"data: {json.dumps(token_payload)}\n\n"
+                    )
+
+            elif kind == "on_tool_start":
+
+                yield (
+                    f"event: tool\n"
+                    f"data: {event['name']}\n\n"
+                )
+
+            elif (
+                kind == "on_chain_end"
+                and event.get("name") == "LangGraph"
+            ):
+
+                final_state = event["data"]["output"]
+
+        if final_state is None:
+
+            raise RuntimeError(
+                "Interview question graph produced no "
+                "final state."
             )
-        )
 
         new_question = extract_text(
-            result["messages"][-1].content
+            final_state["messages"][-1].content
         )
 
-        return MockInterviewTurnResponse(
-            question_number=(
+        done_payload = {
+            "type": "done",
+            "question_number": (
                 questions_asked + 1
             ),
-            question=new_question,
-            is_complete=False,
-            conversation_history=(
+            "question": new_question,
+            "is_complete": False,
+            "conversation_history": (
                 serialize_history(
-                    result["messages"]
+                    final_state["messages"]
                 )
             ),
-        )
+            "evaluation": None,
+        }
+
+        yield f"data: {json.dumps(done_payload)}\n\n"
 
     except Exception as e:
 
-        handle_llm_error(e)
+        yield format_stream_error(e)
+
+
+@app.post(
+    "/mock-interview/turn"
+)
+async def mock_interview_turn(
+    request: MockInterviewTurnRequest
+):
+
+    return StreamingResponse(
+        stream_mock_interview_turn(request),
+        media_type="text/event-stream",
+    )

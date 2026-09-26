@@ -6,7 +6,7 @@ import {
 } from 'react-router-dom'
 
 import Navbar from '../components/Navbar'
-import { takeMockInterviewTurn } from '../api/mockInterviewApi'
+import { streamMockInterviewTurn } from '../api/mockInterviewApi'
 import { useAuth } from '../context/AuthContext'
 
 function ScoreRing({ score }) {
@@ -401,49 +401,44 @@ function MockInterview() {
             return
         }
 
-        try {
-            setLoading(true)
-            setError('')
+        setLoading(true)
+        setError('')
+        setQuestion('')
 
-            const payload = {
-                company_id: companyId,
-                student_id: studentId,
-                round_type: 'TECHNICAL',
-                conversation_history: [],
-                student_answer: ''
-            }
-
-            console.log('Starting mock interview:', payload)
-
-            const result = await takeMockInterviewTurn(payload)
-
-            if (!result?.success) {
-                throw new Error(
-                    result?.message ||
-                    'Failed to start mock interview'
-                )
-            }
-
-            const data = result.data
-
-            setIsComplete(false)
-            setEvaluation(null)
-            setQuestion(data?.question || '')
-            setQuestionNumber(data?.question_number || 1)
-            setConversationHistory(data?.conversation_history || [])
-
-        } catch (err) {
-            console.error('Failed to start mock interview:', err)
-
-            setError(
-                err?.response?.data?.message ||
-                err?.response?.data?.detail ||
-                err?.message ||
-                'Could not start mock interview.'
-            )
-        } finally {
-            setLoading(false)
+        const payload = {
+            company_id: companyId,
+            student_id: studentId,
+            round_type: 'TECHNICAL',
+            conversation_history: [],
+            student_answer: ''
         }
+
+        console.log('Starting mock interview:', payload)
+
+        let accumulated = ''
+
+        await streamMockInterviewTurn(payload, {
+            onToken: (text) => {
+                accumulated += text
+                setQuestion(accumulated)
+                /* Drop the "Preparing your interview..." spinner as soon as
+                   the first token arrives so the question streams in live. */
+                setLoading(false)
+            },
+            onDone: (data) => {
+                setIsComplete(false)
+                setEvaluation(null)
+                setQuestion(data?.question || accumulated)
+                setQuestionNumber(data?.question_number || 1)
+                setConversationHistory(data?.conversation_history || [])
+                setLoading(false)
+            },
+            onError: (err) => {
+                console.error('Failed to start mock interview:', err)
+                setError(err?.message || 'Could not start mock interview.')
+                setLoading(false)
+            }
+        })
     }
 
     async function submitAnswer() {
@@ -463,67 +458,65 @@ function MockInterview() {
             return
         }
 
-        try {
-            setSubmitting(true)
-            setError('')
+        setSubmitting(true)
+        setError('')
 
-            const payload = {
-                company_id: companyId,
-                student_id: user.studentId,
-                round_type: 'TECHNICAL',
-                conversation_history: conversationHistory,
-                student_answer: answer.trim()
-            }
-
-            console.log('Submitting mock interview answer:', payload)
-
-            const result = await takeMockInterviewTurn(payload)
-
-            if (!result?.success) {
-                throw new Error(
-                    result?.message ||
-                    'Failed to submit answer'
-                )
-            }
-
-            const data = result.data
-
-            /* Interview completes after the final question. */
-            if (data?.is_complete) {
-                setQuestionNumber(data?.question_number || 5)
-                setIsComplete(true)
-                setConversationHistory(
-                    data?.conversation_history ||
-                    conversationHistory
-                )
-                setEvaluation(data?.evaluation || null)
-                setQuestion('')
-                setAnswer('')
-                return
-            }
-
-            setQuestion(data?.question || '')
-            setQuestionNumber(
-                data?.question_number ||
-                questionNumber + 1
-            )
-            setConversationHistory(
-                data?.conversation_history || []
-            )
-            setAnswer('')
-
-        } catch (err) {
-            console.error('Failed to submit mock interview answer:', err)
-
-            setError(
-                err?.response?.data?.message ||
-                err?.response?.data?.detail ||
-                err?.message ||
-                'Could not submit your answer.'
-            )
-        } finally {
-            setSubmitting(false)
+        const payload = {
+            company_id: companyId,
+            student_id: user.studentId,
+            round_type: 'TECHNICAL',
+            conversation_history: conversationHistory,
+            student_answer: answer.trim()
         }
+
+        console.log('Submitting mock interview answer:', payload)
+
+        setQuestion('')
+        setAnswer('')
+
+        /* Note: when this turn completes the interview, the backend goes
+           straight to a "done" evaluation event with no "token" events first
+           (InterviewEvaluation is structured output, not stream-friendly —
+           see the AI service's main.py) so `accumulated` stays empty on the
+           final turn and the question box just stays blank until the
+           results view replaces it. */
+        let accumulated = ''
+
+        await streamMockInterviewTurn(payload, {
+            onToken: (text) => {
+                accumulated += text
+                setQuestion(accumulated)
+            },
+            onDone: (data) => {
+                if (data?.is_complete) {
+                    setQuestionNumber(data?.question_number || 5)
+                    setIsComplete(true)
+                    setConversationHistory(
+                        data?.conversation_history ||
+                        conversationHistory
+                    )
+                    setEvaluation(data?.evaluation || null)
+                    setQuestion('')
+                    setSubmitting(false)
+                    return
+                }
+
+                setQuestion(data?.question || accumulated)
+                setQuestionNumber(
+                    data?.question_number ||
+                    questionNumber + 1
+                )
+                setConversationHistory(
+                    data?.conversation_history || []
+                )
+                setSubmitting(false)
+            },
+            onError: (err) => {
+                console.error('Failed to submit mock interview answer:', err)
+                setError(err?.message || 'Could not submit your answer.')
+                setSubmitting(false)
+            }
+        })
     }
 
     return (
@@ -542,7 +535,7 @@ function MockInterview() {
                         Back
                     </button>
 
-                    <div className="relative overflow-hidden rounded-3xl border border-base-300 bg-gradient-to-br from-primary/20 via-base-100 to-base-100 shadow-sm">
+                    <div className="relative overflow-hidden rounded-3xl border border-base-300 bg-linear-to-br from-primary/20 via-base-100 to-base-100 shadow-sm">
                         <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
                         <div className="absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-secondary/10 blur-3xl" />
 
