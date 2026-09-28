@@ -138,15 +138,6 @@ flowchart TB
 
 ---
 
-## Roadmap
-
-- [x] **Phase 1 — Backend foundation:** auth, RBAC, verification gate, CRUD for all core entities, filtering, rate limiting, Cloudinary uploads
-- [x] **Company research agent:** LangGraph + Groq + Tavily, integrated with the backend and frontend
-- [ ] **Phase 2 — RAG-based company research:** embeddings + `pgvector` in PostgreSQL, so the agent can ground answers in stored placement data alongside live web search
-- [ ] **Production deployment:** see [Deployment](#deployment)
-
----
-
 ## Project Structure
 
 ```
