@@ -36,3 +36,21 @@ export async function register(
 
     return response.data
 }
+
+
+/**
+ * Logs out the current browser session.
+ *
+ * The JWT is HttpOnly, so the browser cannot delete it
+ * directly. The backend expires the cookie and revokes
+ * the JWT server-side.
+ */
+export async function logout() {
+
+    const response =
+        await axiosClient.post(
+            '/auth/logout'
+        )
+
+    return response.data
+}

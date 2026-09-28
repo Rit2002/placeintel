@@ -25,31 +25,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private static final String COOKIE_NAME = "jwt";
 
     private final JwtUtil jwtUtil;
+    private final JwtRevocationService jwtRevocationService;
     private final UserDetailsServiceImpl userDetailsService;
 
     /*
      * IMPORTANT FOR SSE
      *
      * SseEmitter uses Servlet asynchronous request processing.
-     * Spring can run the security filter chain again during the
-     * ASYNC dispatcher phase.
      *
-     * OncePerRequestFilter does not have to participate in async
-     * dispatches unless we explicitly enable it.
-     *
-     * Without this override:
-     *
-     * REQUEST
-     *   -> JWT authentication ✅
-     *
-     * ASYNC
-     *   -> JwtAuthFilter skipped
-     *   -> SecurityContext empty
-     *   -> AnonymousAuthenticationFilter
-     *   -> Access Denied ❌
-     *
-     * With this override, the JWT cookie is read again during the
-     * ASYNC dispatch and the SecurityContext is rebuilt.
+     * The JWT authentication must therefore be reconstructed
+     * during ASYNC dispatches as well.
      */
     @Override
     protected boolean shouldNotFilterAsyncDispatch() {
@@ -63,17 +48,71 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String token = extractTokenFromCookie(request);
+        String token =
+                extractTokenFromCookie(request);
 
         if (token != null && jwtUtil.isTokenValid(token)) {
 
             try {
 
-                String email = jwtUtil.extractEmail(token);
+                /*
+                 * -------------------------------------------------
+                 * STEP 1
+                 * Get the unique JWT session identifier.
+                 * -------------------------------------------------
+                 */
+                String jti =
+                        jwtUtil.extractJti(token);
+
+                /*
+                 * -------------------------------------------------
+                 * STEP 2
+                 * Check server-side revocation.
+                 *
+                 * If this JWT was logged out, do NOT authenticate
+                 * the request even though the JWT signature itself
+                 * is still valid.
+                 * -------------------------------------------------
+                 */
+                if (jwtRevocationService.isRevoked(jti)) {
+
+                    SecurityContextHolder
+                            .clearContext();
+
+                    /*
+                     * We do not stop the filter chain here.
+                     *
+                     * Spring Security will see that there is no
+                     * authenticated user and will reject protected
+                     * endpoints normally.
+                     */
+                    filterChain.doFilter(
+                            request,
+                            response
+                    );
+
+                    return;
+                }
+
+                /*
+                 * -------------------------------------------------
+                 * STEP 3
+                 * Extract user identity from JWT.
+                 * -------------------------------------------------
+                 */
+                String email =
+                        jwtUtil.extractEmail(token);
 
                 UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(email);
+                        userDetailsService
+                                .loadUserByUsername(email);
 
+                /*
+                 * -------------------------------------------------
+                 * STEP 4
+                 * Build Spring Security authentication.
+                 * -------------------------------------------------
+                 */
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
@@ -97,27 +136,41 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                 + authToken.getAuthorities()
                 );
 
-            } catch (UsernameNotFoundException e) {
+            } catch (
+                    UsernameNotFoundException e
+            ) {
 
                 /*
                  * Cookie references a user that no longer exists.
-                 * Treat the request as unauthenticated.
                  */
-                SecurityContextHolder.clearContext();
+                SecurityContextHolder
+                        .clearContext();
+
             }
         }
 
-        filterChain.doFilter(request, response);
+        filterChain.doFilter(
+                request,
+                response
+        );
     }
 
-    private String extractTokenFromCookie(HttpServletRequest request) {
+    private String extractTokenFromCookie(
+            HttpServletRequest request
+    ) {
 
         if (request.getCookies() == null) {
             return null;
         }
 
-        return Arrays.stream(request.getCookies())
-                .filter(cookie -> COOKIE_NAME.equals(cookie.getName()))
+        return Arrays
+                .stream(request.getCookies())
+                .filter(
+                        cookie ->
+                                COOKIE_NAME.equals(
+                                        cookie.getName()
+                                )
+                )
                 .map(Cookie::getValue)
                 .findFirst()
                 .orElse(null);
