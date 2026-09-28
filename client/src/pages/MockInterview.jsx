@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import {
     useLocation,
     useNavigate,
@@ -9,11 +11,98 @@ import Navbar from '../components/Navbar'
 import { streamMockInterviewTurn } from '../api/mockInterviewApi'
 import { useAuth } from '../context/AuthContext'
 
+
+function MarkdownContent({ children, className = '' }) {
+    return (
+        <div
+            className={`
+                ${className}
+                break-words
+                leading-7
+                [&_h1]:mb-4
+                [&_h1]:mt-6
+                [&_h1]:text-2xl
+                [&_h1]:font-black
+                [&_h2]:mb-3
+                [&_h2]:mt-5
+                [&_h2]:text-xl
+                [&_h2]:font-bold
+                [&_h3]:mb-2
+                [&_h3]:mt-4
+                [&_h3]:text-lg
+                [&_h3]:font-bold
+                [&_p]:mb-3
+                [&_p:last-child]:mb-0
+                [&_ul]:my-3
+                [&_ul]:list-disc
+                [&_ul]:pl-6
+                [&_ol]:my-3
+                [&_ol]:list-decimal
+                [&_ol]:pl-6
+                [&_li]:my-1
+                [&_strong]:font-bold
+                [&_em]:italic
+                [&_blockquote]:my-4
+                [&_blockquote]:border-l-4
+                [&_blockquote]:border-primary
+                [&_blockquote]:pl-4
+                [&_blockquote]:italic
+                [&_a]:text-primary
+                [&_a]:underline
+                [&_a]:underline-offset-2
+                [&_code]:rounded-md
+                [&_code]:bg-base-300
+                [&_code]:px-1.5
+                [&_code]:py-0.5
+                [&_code]:font-mono
+                [&_code]:text-[0.9em]
+                [&_pre]:my-4
+                [&_pre]:overflow-x-auto
+                [&_pre]:rounded-xl
+                [&_pre]:bg-base-300
+                [&_pre]:p-4
+                [&_pre_code]:bg-transparent
+                [&_pre_code]:p-0
+                [&_table]:my-4
+                [&_table]:w-full
+                [&_table]:border-collapse
+                [&_th]:border
+                [&_th]:border-base-300
+                [&_th]:bg-base-200
+                [&_th]:px-3
+                [&_th]:py-2
+                [&_th]:text-left
+                [&_td]:border
+                [&_td]:border-base-300
+                [&_td]:px-3
+                [&_td]:py-2
+            `}
+        >
+            <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                    a: ({ node, ...props }) => (
+                        <a
+                            {...props}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        />
+                    )
+                }}
+            >
+                {children || ''}
+            </ReactMarkdown>
+        </div>
+    )
+}
+
+
 function ScoreRing({ score }) {
     const safeScore = Math.min(100, Math.max(0, Number(score) || 0))
     const radius = 52
     const circumference = 2 * Math.PI * radius
-    const offset = circumference - (safeScore / 100) * circumference
+    const offset =
+        circumference - (safeScore / 100) * circumference
 
     return (
         <div className="relative h-36 w-36 shrink-0 sm:h-44 sm:w-44">
@@ -31,6 +120,7 @@ function ScoreRing({ score }) {
                     strokeWidth="9"
                     className="text-base-300"
                 />
+
                 <circle
                     cx="60"
                     cy="60"
@@ -49,6 +139,7 @@ function ScoreRing({ score }) {
                 <span className="text-3xl font-black tracking-tight">
                     {safeScore}
                 </span>
+
                 <span className="text-xs font-medium uppercase tracking-[0.18em] text-base-content/50">
                     / 100
                 </span>
@@ -57,6 +148,7 @@ function ScoreRing({ score }) {
     )
 }
 
+
 function ScoreTone({ score }) {
     const value = Number(score) || 0
 
@@ -64,7 +156,8 @@ function ScoreTone({ score }) {
         return {
             label: 'Strong performance',
             className: 'badge-success',
-            description: 'Your fundamentals and interview communication are coming through clearly.'
+            description:
+                'Your fundamentals and interview communication are coming through clearly.'
         }
     }
 
@@ -72,16 +165,19 @@ function ScoreTone({ score }) {
         return {
             label: 'Solid foundation',
             className: 'badge-warning',
-            description: 'You have the core ideas. More depth and implementation detail will make the answers stronger.'
+            description:
+                'You have the core ideas. More depth and implementation detail will make the answers stronger.'
         }
     }
 
     return {
         label: 'Needs improvement',
         className: 'badge-error',
-        description: 'Focus on completeness, concrete examples, trade-offs, and implementation details.'
+        description:
+            'Focus on completeness, concrete examples, trade-offs, and implementation details.'
     }
 }
+
 
 function StatCard({ value, label, icon }) {
     return (
@@ -90,14 +186,21 @@ function StatCard({ value, label, icon }) {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-lg">
                     {icon}
                 </div>
+
                 <div>
-                    <p className="text-xl font-bold leading-none">{value}</p>
-                    <p className="mt-1 text-xs text-base-content/55">{label}</p>
+                    <p className="text-xl font-bold leading-none">
+                        {value}
+                    </p>
+
+                    <p className="mt-1 text-xs text-base-content/55">
+                        {label}
+                    </p>
                 </div>
             </div>
         </div>
     )
 }
+
 
 function SectionCard({ title, icon, children }) {
     return (
@@ -106,14 +209,19 @@ function SectionCard({ title, icon, children }) {
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-base-200 text-base">
                     {icon}
                 </div>
-                <h3 className="font-bold">{title}</h3>
+
+                <h3 className="font-bold">
+                    {title}
+                </h3>
             </div>
+
             <div className="px-5 py-5 sm:px-6">
                 {children}
             </div>
         </section>
     )
 }
+
 
 function FeedbackList({ items, emptyText }) {
     if (!Array.isArray(items) || items.length === 0) {
@@ -134,14 +242,16 @@ function FeedbackList({ items, emptyText }) {
                     <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-base-100 text-xs font-bold shadow-sm">
                         {index + 1}
                     </span>
-                    <p className="text-sm leading-6 text-base-content/80">
+
+                    <MarkdownContent className="min-w-0 text-sm text-base-content/80">
                         {item}
-                    </p>
+                    </MarkdownContent>
                 </div>
             ))}
         </div>
     )
 }
+
 
 function QuestionEvaluation({ item, index }) {
     const [open, setOpen] = useState(index === 0)
@@ -158,10 +268,12 @@ function QuestionEvaluation({ item, index }) {
                         <span className="badge badge-neutral badge-sm">
                             Q{index + 1}
                         </span>
+
                         <span className="text-xs font-medium uppercase tracking-wider text-base-content/45">
                             Question review
                         </span>
                     </div>
+
                     <p className="line-clamp-2 text-sm font-semibold leading-6 sm:text-base">
                         {item?.question || 'Question not available'}
                     </p>
@@ -184,18 +296,22 @@ function QuestionEvaluation({ item, index }) {
                             <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-base-content/45">
                                 Answer summary
                             </p>
-                            <p className="text-sm leading-6 text-base-content/75">
-                                {item?.answer_summary || 'No answer summary was provided.'}
-                            </p>
+
+                            <MarkdownContent className="text-sm text-base-content/75">
+                                {item?.answer_summary ||
+                                    'No answer summary was provided.'}
+                            </MarkdownContent>
                         </div>
 
                         <div className="rounded-2xl border border-base-300 bg-base-200/50 p-4">
                             <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-base-content/45">
                                 Strengths
                             </p>
-                            <p className="text-sm leading-6 text-base-content/75">
-                                {item?.strengths || 'No specific strength was recorded.'}
-                            </p>
+
+                            <MarkdownContent className="text-sm text-base-content/75">
+                                {item?.strengths ||
+                                    'No specific strength was recorded.'}
+                            </MarkdownContent>
                         </div>
                     </div>
 
@@ -203,9 +319,11 @@ function QuestionEvaluation({ item, index }) {
                         <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-base-content/45">
                             Improve next time
                         </p>
-                        <p className="text-sm leading-6 text-base-content/75">
-                            {item?.improvement_areas || 'No improvement areas were recorded.'}
-                        </p>
+
+                        <MarkdownContent className="text-sm text-base-content/75">
+                            {item?.improvement_areas ||
+                                'No improvement areas were recorded.'}
+                        </MarkdownContent>
                     </div>
                 </div>
             )}
@@ -213,16 +331,24 @@ function QuestionEvaluation({ item, index }) {
     )
 }
 
+
 function EvaluationView({ evaluation }) {
     const score = Number(evaluation?.overall_score) || 0
     const tone = ScoreTone({ score })
-    const questionFeedback = Array.isArray(evaluation?.per_question_feedback)
+
+    const questionFeedback = Array.isArray(
+        evaluation?.per_question_feedback
+    )
         ? evaluation.per_question_feedback
         : []
+
     const strengths = Array.isArray(evaluation?.key_strengths)
         ? evaluation.key_strengths
         : []
-    const improvementAreas = Array.isArray(evaluation?.key_improvement_areas)
+
+    const improvementAreas = Array.isArray(
+        evaluation?.key_improvement_areas
+    )
         ? evaluation.key_improvement_areas
         : []
 
@@ -239,9 +365,12 @@ function EvaluationView({ evaluation }) {
 
                     <div>
                         <div className="mb-3 flex flex-wrap items-center gap-2">
-                            <span className={`badge ${tone.className} badge-outline font-semibold`}>
+                            <span
+                                className={`badge ${tone.className} badge-outline font-semibold`}
+                            >
                                 {tone.label}
                             </span>
+
                             <span className="badge badge-ghost">
                                 {questionFeedback.length || 0} questions reviewed
                             </span>
@@ -250,10 +379,12 @@ function EvaluationView({ evaluation }) {
                         <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
                             Your interview performance
                         </h2>
-                        <p className="mt-3 max-w-2xl text-sm leading-6 text-base-content/65 sm:text-base">
+
+                        <MarkdownContent className="mt-3 max-w-2xl text-sm text-base-content/65 sm:text-base">
                             {evaluation?.overall_feedback ||
                                 'Your interview has been completed. Review the section-by-section feedback below.'}
-                        </p>
+                        </MarkdownContent>
+
                         <p className="mt-4 max-w-2xl text-sm font-medium text-base-content/75">
                             {tone.description}
                         </p>
@@ -262,20 +393,45 @@ function EvaluationView({ evaluation }) {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard value={`${questionFeedback.length}/5`} label="Questions reviewed" icon="◉" />
-                <StatCard value={strengths.length} label="Key strengths" icon="✓" />
-                <StatCard value={improvementAreas.length} label="Focus areas" icon="↗" />
-                <StatCard value={`${score}%`} label="Overall score" icon="★" />
+                <StatCard
+                    value={`${questionFeedback.length}/5`}
+                    label="Questions reviewed"
+                    icon="◉"
+                />
+
+                <StatCard
+                    value={strengths.length}
+                    label="Key strengths"
+                    icon="✓"
+                />
+
+                <StatCard
+                    value={improvementAreas.length}
+                    label="Focus areas"
+                    icon="↗"
+                />
+
+                <StatCard
+                    value={`${score}%`}
+                    label="Overall score"
+                    icon="★"
+                />
             </div>
 
-            <SectionCard title="What you did well" icon="✓">
+            <SectionCard
+                title="What you did well"
+                icon="✓"
+            >
                 <FeedbackList
                     items={strengths}
                     emptyText="No key strengths were returned by the evaluator."
                 />
             </SectionCard>
 
-            <SectionCard title="What to improve" icon="↗">
+            <SectionCard
+                title="What to improve"
+                icon="↗"
+            >
                 <FeedbackList
                     items={improvementAreas}
                     emptyText="No key improvement areas were returned by the evaluator."
@@ -288,10 +444,12 @@ function EvaluationView({ evaluation }) {
                         <p className="text-xs font-bold uppercase tracking-[0.16em] text-base-content/45">
                             Detailed breakdown
                         </p>
+
                         <h3 className="mt-1 text-xl font-black tracking-tight sm:text-2xl">
                             Question-by-question feedback
                         </h3>
                     </div>
+
                     <span className="hidden text-xs text-base-content/45 sm:block">
                         Click a question to expand it
                     </span>
@@ -301,14 +459,19 @@ function EvaluationView({ evaluation }) {
                     {questionFeedback.length > 0 ? (
                         questionFeedback.map((item, index) => (
                             <QuestionEvaluation
-                                key={`${item?.question || 'question'}-${index}`}
+                                key={`${
+                                    item?.question || 'question'
+                                }-${index}`}
                                 item={item}
                                 index={index}
                             />
                         ))
                     ) : (
                         <div className="rounded-2xl border border-dashed border-base-300 bg-base-100 p-8 text-center">
-                            <p className="font-semibold">No detailed question feedback available.</p>
+                            <p className="font-semibold">
+                                No detailed question feedback available.
+                            </p>
+
                             <p className="mt-1 text-sm text-base-content/55">
                                 The interview completed successfully, but the evaluator did not return per-question details.
                             </p>
@@ -320,8 +483,8 @@ function EvaluationView({ evaluation }) {
     )
 }
 
-function MockInterview() {
 
+function MockInterview() {
     const location = useLocation()
     const navigate = useNavigate()
     const { companyId: routeCompanyId } = useParams()
@@ -360,7 +523,9 @@ function MockInterview() {
     const [isComplete, setIsComplete] = useState(false)
     const [evaluation, setEvaluation] = useState(null)
 
-    /* Prevent React StrictMode from starting the interview more than once. */
+    /*
+     * Prevent React StrictMode from starting the interview more than once.
+     */
     const interviewStarted = useRef(false)
 
     /*
@@ -383,6 +548,7 @@ function MockInterview() {
         interviewStarted.current = true
         startInterview(user.studentId)
     }, [user, companyId])
+
 
     async function startInterview(studentId) {
         if (!companyId) {
@@ -413,7 +579,10 @@ function MockInterview() {
             student_answer: ''
         }
 
-        console.log('Starting mock interview:', payload)
+        console.log(
+            'Starting mock interview:',
+            payload
+        )
 
         let accumulated = ''
 
@@ -421,25 +590,49 @@ function MockInterview() {
             onToken: (text) => {
                 accumulated += text
                 setQuestion(accumulated)
-                /* Drop the "Preparing your interview..." spinner as soon as
-                   the first token arrives so the question streams in live. */
+
+                /*
+                 * Drop the "Preparing your interview..." spinner as soon as
+                 * the first token arrives so the question streams in live.
+                 */
                 setLoading(false)
             },
+
             onDone: (data) => {
                 setIsComplete(false)
                 setEvaluation(null)
-                setQuestion(data?.question || accumulated)
-                setQuestionNumber(data?.question_number || 1)
-                setConversationHistory(data?.conversation_history || [])
+
+                setQuestion(
+                    data?.question || accumulated
+                )
+
+                setQuestionNumber(
+                    data?.question_number || 1
+                )
+
+                setConversationHistory(
+                    data?.conversation_history || []
+                )
+
                 setLoading(false)
             },
+
             onError: (err) => {
-                console.error('Failed to start mock interview:', err)
-                setError(err?.message || 'Could not start mock interview.')
+                console.error(
+                    'Failed to start mock interview:',
+                    err
+                )
+
+                setError(
+                    err?.message ||
+                    'Could not start mock interview.'
+                )
+
                 setLoading(false)
             }
         })
     }
+
 
     async function submitAnswer() {
         if (!answer.trim() || submitting) {
@@ -447,7 +640,9 @@ function MockInterview() {
         }
 
         if (!companyId) {
-            setError('Company information is missing.')
+            setError(
+                'Company information is missing.'
+            )
             return
         }
 
@@ -469,17 +664,18 @@ function MockInterview() {
             student_answer: answer.trim()
         }
 
-        console.log('Submitting mock interview answer:', payload)
+        console.log(
+            'Submitting mock interview answer:',
+            payload
+        )
 
         setQuestion('')
         setAnswer('')
 
-        /* Note: when this turn completes the interview, the backend goes
-           straight to a "done" evaluation event with no "token" events first
-           (InterviewEvaluation is structured output, not stream-friendly —
-           see the AI service's main.py) so `accumulated` stays empty on the
-           final turn and the question box just stays blank until the
-           results view replaces it. */
+        /*
+         * When this turn completes the interview, the backend goes
+         * straight to a "done" evaluation event with no "token" events first.
+         */
         let accumulated = ''
 
         await streamMockInterviewTurn(payload, {
@@ -487,51 +683,80 @@ function MockInterview() {
                 accumulated += text
                 setQuestion(accumulated)
             },
+
             onDone: (data) => {
                 if (data?.is_complete) {
-                    setQuestionNumber(data?.question_number || 5)
+                    setQuestionNumber(
+                        data?.question_number || 5
+                    )
+
                     setIsComplete(true)
+
                     setConversationHistory(
                         data?.conversation_history ||
                         conversationHistory
                     )
-                    setEvaluation(data?.evaluation || null)
+
+                    setEvaluation(
+                        data?.evaluation || null
+                    )
+
                     setQuestion('')
                     setSubmitting(false)
+
                     return
                 }
 
-                setQuestion(data?.question || accumulated)
+                setQuestion(
+                    data?.question || accumulated
+                )
+
                 setQuestionNumber(
                     data?.question_number ||
                     questionNumber + 1
                 )
+
                 setConversationHistory(
                     data?.conversation_history || []
                 )
+
                 setSubmitting(false)
             },
+
             onError: (err) => {
-                console.error('Failed to submit mock interview answer:', err)
-                setError(err?.message || 'Could not submit your answer.')
+                console.error(
+                    'Failed to submit mock interview answer:',
+                    err
+                )
+
+                setError(
+                    err?.message ||
+                    'Could not submit your answer.'
+                )
+
                 setSubmitting(false)
             }
         })
     }
+
 
     return (
         <div className="min-h-screen bg-base-200">
             <Navbar />
 
             <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-10">
+
                 {/* Header */}
                 <div className="mb-8">
                     <button
                         type="button"
                         onClick={() => navigate(-1)}
-                        className="btn btn-ghost btn-sm mb-4 rounded-xl px-3 gap-2"
+                        className="btn btn-ghost btn-sm mb-4 gap-2 rounded-xl px-3"
                     >
-                        <span className="text-base">←</span>
+                        <span className="text-base">
+                            ←
+                        </span>
+
                         Back
                     </button>
 
@@ -544,9 +769,11 @@ function MockInterview() {
                                 <span className="badge badge-primary badge-outline font-semibold">
                                     Mock Interview
                                 </span>
+
                                 <span className="badge badge-ghost">
                                     5 Questions
                                 </span>
+
                                 <span className="badge badge-ghost">
                                     Technical Round
                                 </span>
@@ -556,9 +783,11 @@ function MockInterview() {
                                 <p className="text-sm font-medium text-base-content/60">
                                     Prepare for your next interview
                                 </p>
+
                                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
                                     {companyName}
                                 </h1>
+
                                 {role && (
                                     <p className="text-base text-base-content/70 sm:text-lg">
                                         {role}
@@ -571,10 +800,12 @@ function MockInterview() {
                                     <span className="h-2 w-2 rounded-full bg-success" />
                                     Company-focused questions
                                 </span>
+
                                 <span className="flex items-center gap-2">
                                     <span className="h-2 w-2 rounded-full bg-info" />
                                     Adaptive interview flow
                                 </span>
+
                                 <span className="flex items-center gap-2">
                                     <span className="h-2 w-2 rounded-full bg-primary" />
                                     Detailed evaluation
@@ -584,16 +815,22 @@ function MockInterview() {
                     </div>
                 </div>
 
+
                 {/* Loading */}
                 {loading && (
                     <div className="flex flex-col items-center justify-center rounded-3xl border border-base-300 bg-base-100 py-20 shadow-sm">
                         <span className="loading loading-spinner loading-lg text-primary" />
-                        <p className="mt-4 font-semibold">Preparing your interview...</p>
+
+                        <p className="mt-4 font-semibold">
+                            Preparing your interview...
+                        </p>
+
                         <p className="mt-1 text-sm text-base-content/50">
                             Your interviewer is thinking very hard. Allegedly.
                         </p>
                     </div>
                 )}
+
 
                 {/* Error */}
                 {error && (
@@ -601,140 +838,190 @@ function MockInterview() {
                         role="alert"
                         className="alert alert-error mb-6 rounded-2xl shadow-sm"
                     >
-                        <span>{error}</span>
+                        <span>
+                            {error}
+                        </span>
                     </div>
                 )}
 
+
                 {/* Interview */}
-                {!loading && !error && !isComplete && (
-                    <div className="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
-                        <div className="p-5 sm:p-7">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-base-content/45">
-                                        Current question
-                                    </p>
-                                    <p className="mt-1 text-sm font-semibold text-base-content/70">
-                                        Question {questionNumber} of 5
-                                    </p>
+                {!loading &&
+                    !error &&
+                    !isComplete && (
+                        <div className="rounded-3xl border border-base-300 bg-base-100 shadow-sm">
+                            <div className="p-5 sm:p-7">
+
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-base-content/45">
+                                            Current question
+                                        </p>
+
+                                        <p className="mt-1 text-sm font-semibold text-base-content/70">
+                                            Question {questionNumber} of 5
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        {Array.from(
+                                            { length: 5 },
+                                            (_, index) => {
+                                                const number =
+                                                    index + 1
+
+                                                const complete =
+                                                    number <
+                                                    questionNumber
+
+                                                const current =
+                                                    number ===
+                                                    questionNumber
+
+                                                return (
+                                                    <span
+                                                        key={number}
+                                                        className={`h-2.5 w-8 rounded-full transition-colors ${
+                                                            complete
+                                                                ? 'bg-success'
+                                                                : current
+                                                                    ? 'bg-primary'
+                                                                    : 'bg-base-300'
+                                                        }`}
+                                                        aria-hidden="true"
+                                                    />
+                                                )
+                                            }
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    {Array.from({ length: 5 }, (_, index) => {
-                                        const number = index + 1
-                                        const complete = number < questionNumber
-                                        const current = number === questionNumber
+                                <div className="my-6 border-t border-base-300" />
 
-                                        return (
-                                            <span
-                                                key={number}
-                                                className={`h-2.5 w-8 rounded-full transition-colors ${
-                                                    complete
-                                                        ? 'bg-success'
-                                                        : current
-                                                            ? 'bg-primary'
-                                                            : 'bg-base-300'
-                                                }`}
-                                                aria-hidden="true"
-                                            />
-                                        )
-                                    })}
+
+                                {/* MARKDOWN QUESTION */}
+                                {question && (
+                                    <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6">
+                                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary/70">
+                                            Interviewer
+                                        </p>
+
+                                        <MarkdownContent className="mt-3 text-base-content/90 sm:text-lg">
+                                            {question}
+                                        </MarkdownContent>
+                                    </div>
+                                )}
+
+
+                                {/* Answer */}
+                                <div className="mt-6">
+                                    <div className="flex items-center justify-between gap-4">
+                                        <label
+                                            htmlFor="answer"
+                                            className="text-sm font-bold"
+                                        >
+                                            Your Answer
+                                        </label>
+
+                                        <span className="text-xs text-base-content/45">
+                                            Be specific and use examples where possible.
+                                        </span>
+                                    </div>
+
+                                    <textarea
+                                        id="answer"
+                                        value={answer}
+                                        onChange={(e) =>
+                                            setAnswer(
+                                                e.target.value
+                                            )
+                                        }
+                                        disabled={submitting}
+                                        className="textarea textarea-bordered mt-2 min-h-52 w-full rounded-2xl bg-base-100 p-4 leading-7"
+                                        placeholder="Type your answer here..."
+                                    />
                                 </div>
+
+
+                                {/* Submit */}
+                                <div className="mt-5 flex justify-end">
+                                    <button
+                                        type="button"
+                                        onClick={submitAnswer}
+                                        className="btn btn-primary rounded-xl px-6"
+                                        disabled={
+                                            !answer.trim() ||
+                                            submitting
+                                        }
+                                    >
+                                        {submitting ? (
+                                            <>
+                                                <span className="loading loading-spinner loading-sm" />
+                                                Evaluating...
+                                            </>
+                                        ) : (
+                                            'Submit Answer'
+                                        )}
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    )}
+
+
+                {/* Completed */}
+                {!loading &&
+                    !error &&
+                    isComplete && (
+                        <div>
+
+                            <div className="mb-8 text-center sm:text-left">
+                                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-success/20 bg-success/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-success">
+                                    <span>
+                                        ✓
+                                    </span>
+
+                                    Interview complete
+                                </div>
+
+                                <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
+                                    Your results are ready
+                                </h2>
+
+                                <p className="mt-2 text-sm text-base-content/55 sm:text-base">
+                                    You completed all 5 questions. Here is the evaluator feedback in a form that does not require squinting at raw JSON.
+                                </p>
                             </div>
 
-                            <div className="my-6 border-t border-base-300" />
 
-                            {question && (
-                                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6">
-                                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary/70">
-                                        Interviewer
-                                    </p>
-                                    <p className="mt-3 text-lg font-medium leading-8 sm:text-xl">
-                                        {question}
+                            {evaluation ? (
+                                <EvaluationView
+                                    evaluation={evaluation}
+                                />
+                            ) : (
+                                <div className="rounded-3xl border border-base-300 bg-base-100 p-8 text-center shadow-sm">
+                                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-warning/10 text-2xl">
+                                        !
+                                    </div>
+
+                                    <h3 className="mt-4 text-xl font-bold">
+                                        Evaluation unavailable
+                                    </h3>
+
+                                    <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-base-content/55">
+                                        The interview completed successfully, but no evaluation payload was returned by the backend.
                                     </p>
                                 </div>
                             )}
 
-                            <div className="mt-6">
-                                <div className="flex items-center justify-between gap-4">
-                                    <label
-                                        htmlFor="answer"
-                                        className="text-sm font-bold"
-                                    >
-                                        Your Answer
-                                    </label>
-                                    <span className="text-xs text-base-content/45">
-                                        Be specific and use examples where possible.
-                                    </span>
-                                </div>
-
-                                <textarea
-                                    id="answer"
-                                    value={answer}
-                                    onChange={(e) => setAnswer(e.target.value)}
-                                    disabled={submitting}
-                                    className="textarea textarea-bordered mt-2 min-h-52 w-full rounded-2xl bg-base-100 p-4 leading-7"
-                                    placeholder="Type your answer here..."
-                                />
-                            </div>
-
-                            <div className="mt-5 flex justify-end">
-                                <button
-                                    type="button"
-                                    onClick={submitAnswer}
-                                    className="btn btn-primary rounded-xl px-6"
-                                    disabled={!answer.trim() || submitting}
-                                >
-                                    {submitting ? (
-                                        <>
-                                            <span className="loading loading-spinner loading-sm" />
-                                            Evaluating...
-                                        </>
-                                    ) : (
-                                        'Submit Answer'
-                                    )}
-                                </button>
-                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* Completed */}
-                {!loading && !error && isComplete && (
-                    <div>
-                        <div className="mb-8 text-center sm:text-left">
-                            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-success/20 bg-success/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-success">
-                                <span>✓</span>
-                                Interview complete
-                            </div>
-                            <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
-                                Your results are ready
-                            </h2>
-                            <p className="mt-2 text-sm text-base-content/55 sm:text-base">
-                                You completed all 5 questions. Here is the evaluator feedback in a form that does not require squinting at raw JSON.
-                            </p>
-                        </div>
-
-                        {evaluation ? (
-                            <EvaluationView evaluation={evaluation} />
-                        ) : (
-                            <div className="rounded-3xl border border-base-300 bg-base-100 p-8 text-center shadow-sm">
-                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-warning/10 text-2xl">
-                                    !
-                                </div>
-                                <h3 className="mt-4 text-xl font-bold">
-                                    Evaluation unavailable
-                                </h3>
-                                <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-base-content/55">
-                                    The interview completed successfully, but no evaluation payload was returned by the backend.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
             </main>
         </div>
     )
 }
+
 
 export default MockInterview

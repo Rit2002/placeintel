@@ -42,6 +42,6 @@ def get_llm():
         model=MODEL_NAME,
         groq_api_key=GROQ_API_KEY,
         temperature=0.2,
-        max_tokens=2048,
+        max_tokens=1500,
         streaming=True,
     )
