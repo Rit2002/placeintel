@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -22,32 +23,46 @@ public class JwtUtil {
     private long expirationMs;
 
     private SecretKey signingKey() {
+
         /*
-        * Why specify UTF_8 explicitly instead of just .getBytes()?
-        * ans : Because .getBytes() alone uses the platform's default charset, which varies by OS/JVM config. If your key is encoded differently on your dev machine vs. a deployment server, the same secret string would produce different byte arrays — meaning tokens signed on one machine would fail verification on another
-        *
-        * cryptographic operations don't work on String objects, they work on raw bytes.
-        *
-        *
-        * */
-        return Keys.hmacShaKeyFor(secret.getBytes((StandardCharsets.UTF_8)));
+         * Cryptographic operations work on bytes, not Strings.
+         *
+         * Explicit UTF-8 ensures the same secret produces the
+         * same byte representation across environments.
+         */
+        return Keys.hmacShaKeyFor(
+                secret.getBytes(StandardCharsets.UTF_8)
+        );
     }
 
     public String generateToken(String email, Role role) {
+
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + expirationMs);
 
-       /* {
-        This sets the "sub" claim — a registered/standard claim defined by the JWT spec itself (RFC 7519)
-            "sub": "ritesh@example.com",
-                "role": "STUDENT",
-                "iat": 1735900000,
-                "exp": 1735903600
-        }*/
+        Date expiry =
+                new Date(
+                        now.getTime() + expirationMs
+                );
 
+        /*
+         * Every issued JWT receives a unique JTI.
+         *
+         * The JTI identifies this specific authentication session.
+         *
+         * Example:
+         *
+         * {
+         *   "sub": "ritesh@example.com",
+         *   "role": "STUDENT",
+         *   "jti": "550e8400-e29b-41d4-a716-446655440000",
+         *   "iat": "...",
+         *   "exp": "..."
+         * }
+         */
         return Jwts.builder()
                 .subject(email)
                 .claim("role", role.name())
+                .id(UUID.randomUUID().toString())
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(signingKey())
@@ -59,21 +74,39 @@ public class JwtUtil {
     }
 
     public String extractRole(String token) {
-        return parseClaims(token).get("role", String.class);
+        return parseClaims(token)
+                .get("role", String.class);
     }
 
+    public String extractJti(String token) {
+        return parseClaims(token).getId();
+    }
+
+    public Date extractExpiration(String token) {
+        return parseClaims(token).getExpiration();
+    }
 
     public boolean isTokenValid(String token) {
+
         try {
+
             parseClaims(token);
+
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+
+        } catch (
+                JwtException |
+                IllegalArgumentException e
+        ) {
+
             return false;
         }
     }
 
     private Claims parseClaims(String token) {
-        return Jwts.parser()
+
+        return Jwts
+                .parser()
                 .verifyWith(signingKey())
                 .build()
                 .parseSignedClaims(token)

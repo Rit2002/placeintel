@@ -1,7 +1,15 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import {
+  NavLink,
+  Outlet
+} from 'react-router-dom'
+
+import {
+  useEffect,
+  useState
+} from 'react'
 
 import { getMyUserInfo } from '../api/tpoApi'
+import { useAuth } from '../context/AuthContext'
 
 
 /* ============================================================
@@ -9,19 +17,27 @@ import { getMyUserInfo } from '../api/tpoApi'
 ============================================================ */
 
 function TpoNavbar() {
-  const [info, setInfo] = useState(null)
+
+  const [info, setInfo] =
+    useState(null)
+
+  const [loggingOut, setLoggingOut] =
+    useState(false)
+
+  const { logout } =
+    useAuth()
 
 
   useEffect(() => {
-    let mounted = true
 
+    let mounted = true
 
     getMyUserInfo()
       .then((result) => {
+
         if (!mounted) {
           return
         }
-
 
         /*
          * API function returns response.data.
@@ -38,13 +54,13 @@ function TpoNavbar() {
          * }
          */
 
-
         setInfo(
           result?.data ||
           result
         )
       })
       .catch((error) => {
+
         console.error(
           'Failed to load user information:',
           error
@@ -55,7 +71,40 @@ function TpoNavbar() {
     return () => {
       mounted = false
     }
+
   }, [])
+
+
+  async function handleLogout() {
+
+    if (loggingOut) {
+      return
+    }
+
+    setLoggingOut(true)
+
+    try {
+
+      await logout()
+
+      window.location.replace('/login')
+
+    } catch (error) {
+
+      console.error(
+        'TPO logout failed:',
+        error
+      )
+
+      window.alert(
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        'Logout failed. Please try again.'
+      )
+
+      setLoggingOut(false)
+    }
+  }
 
 
   return (
@@ -67,6 +116,7 @@ function TpoNavbar() {
 
 
       {info && (
+
         <div className="flex-none">
 
           <div className="dropdown dropdown-end">
@@ -87,9 +137,11 @@ function TpoNavbar() {
 
 
               <span className="text-sm">
+
                 {info.fullName ||
                   info.email ||
                   'TPO'}
+
               </span>
 
             </div>
@@ -119,11 +171,35 @@ function TpoNavbar() {
 
               </li>
 
+
+              <li className="mt-2">
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="btn btn-sm btn-ghost justify-start"
+                >
+
+                  {loggingOut ? (
+                    <>
+                      <span className="loading loading-spinner loading-xs" />
+                      Logging out...
+                    </>
+                  ) : (
+                    'Logout'
+                  )}
+
+                </button>
+
+              </li>
+
             </ul>
 
           </div>
 
         </div>
+
       )}
 
     </div>
@@ -146,6 +222,7 @@ function TpoSidebar() {
 
 
   return (
+
     <div className="card bg-base-100 shadow-sm w-40 shrink-0 h-fit sticky top-4">
 
       <div className="card-body p-2 gap-0.5">
@@ -201,7 +278,9 @@ function TpoSidebar() {
 ============================================================ */
 
 function TpoDashboard() {
+
   return (
+
     <div className="min-h-screen bg-base-200">
 
       <TpoNavbar />

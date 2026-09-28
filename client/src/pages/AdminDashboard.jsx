@@ -3,10 +3,66 @@ import {
     Outlet
 } from 'react-router-dom'
 
+import {
+    useState
+} from 'react'
+
+import {
+    useAuth
+} from '../context/AuthContext'
+
 
 function AdminNavbar() {
 
+    const {
+        logout
+    } = useAuth()
+
+    const [
+        loggingOut,
+        setLoggingOut
+    ] = useState(false)
+
+
+    async function handleLogout() {
+
+        if (loggingOut) {
+            return
+        }
+
+        setLoggingOut(true)
+
+        try {
+
+            await logout()
+
+            /*
+             * Admin has its own authentication entry point.
+             */
+            window.location.replace(
+                '/admin/login'
+            )
+
+        } catch (error) {
+
+            console.error(
+                'Admin logout failed:',
+                error
+            )
+
+            window.alert(
+                error?.response?.data?.message ||
+                error?.response?.data?.error ||
+                'Logout failed. Please try again.'
+            )
+
+            setLoggingOut(false)
+        }
+    }
+
+
     return (
+
         <header className="navbar bg-base-100 border-b border-base-300 px-6">
 
             <div className="flex-1">
@@ -26,11 +82,30 @@ function AdminNavbar() {
             </div>
 
 
-            <div className="flex-none">
+            <div className="flex-none flex items-center gap-3">
 
                 <span className="badge badge-primary badge-outline">
                     ADMIN
                 </span>
+
+
+                <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                >
+
+                    {loggingOut ? (
+                        <>
+                            <span className="loading loading-spinner loading-xs" />
+                            Logging out...
+                        </>
+                    ) : (
+                        'Logout'
+                    )}
+
+                </button>
 
             </div>
 

@@ -7,6 +7,7 @@ import com.rtx.placeintel.entity.User;
 import com.rtx.placeintel.exception.UserAlreadyExistsException;
 import com.rtx.placeintel.repository.StudentProfileRepository;
 import com.rtx.placeintel.repository.UserRepository;
+import com.rtx.placeintel.security.JwtRevocationService;
 import com.rtx.placeintel.security.JwtUtil;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -17,8 +18,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
-
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -27,66 +26,133 @@ public class AuthService {
     private final StudentProfileRepository studentProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final JwtRevocationService jwtRevocationService;
     private final AuthenticationManager authenticationManager;
 
     @Transactional
-    public AuthResult registerStudent(@Valid  RegisterRequest request) {
+    public AuthResult registerStudent(
+            @Valid RegisterRequest request
+    ) {
 
-        if(userRepository.existsByEmail(request.getEmail())) {
-            throw new UserAlreadyExistsException("User already exists.");
+        if (userRepository.existsByEmail(
+                request.getEmail()
+        )) {
+
+            throw new UserAlreadyExistsException(
+                    "User already exists."
+            );
         }
 
-        if(studentProfileRepository.existsByEnrollmentNo(request.getEnrollmentNo())) {
-            throw new UserAlreadyExistsException("User already exits");
+        if (
+                studentProfileRepository
+                        .existsByEnrollmentNo(
+                                request.getEnrollmentNo()
+                        )
+        ) {
+
+            throw new UserAlreadyExistsException(
+                    "User already exits"
+            );
         }
 
-        User user = User.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.STUDENT)
-                .build();
+        User user =
+                User.builder()
+                        .email(request.getEmail())
+                        .password(
+                                passwordEncoder.encode(
+                                        request.getPassword()
+                                )
+                        )
+                        .role(Role.STUDENT)
+                        .build();
 
         userRepository.save(user);
 
-        StudentProfile profile = StudentProfile.builder()
-                .user(user)
-                .fullName(request.getFullName())
-                .enrollmentNo(request.getEnrollmentNo())
-                .build();
+        StudentProfile profile =
+                StudentProfile.builder()
+                        .user(user)
+                        .fullName(request.getFullName())
+                        .enrollmentNo(
+                                request.getEnrollmentNo()
+                        )
+                        .build();
 
-        StudentProfile res = studentProfileRepository.save(profile);
+        StudentProfile res =
+                studentProfileRepository.save(
+                        profile
+                );
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        String token =
+                jwtUtil.generateToken(
+                        user.getEmail(),
+                        user.getRole()
+                );
 
-        return new AuthResult(token, user.getRole(), res.getId().toString());
+        return new AuthResult(
+                token,
+                user.getRole(),
+                res.getId().toString()
+        );
     }
 
-
-
-
-
-
-    public AuthResult loginStudent(LoginRequest request) {
+    public AuthResult loginStudent(
+            LoginRequest request
+    ) {
 
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalStateException("User not found"));
+        User user =
+                userRepository.findByEmail(
+                                request.getEmail()
+                        )
+                        .orElseThrow(
+                                () ->
+                                        new IllegalStateException(
+                                                "User not found"
+                                        )
+                        );
 
         String stsId = null;
 
-        if(user.getRole() == Role.STUDENT) {
+        if (user.getRole() == Role.STUDENT) {
 
-            StudentProfile profile = studentProfileRepository.findByUserId(user.getId())
-                    .orElseThrow(() -> new UsernameNotFoundException("Student profile not found"));
+            StudentProfile profile =
+                    studentProfileRepository
+                            .findByUserId(user.getId())
+                            .orElseThrow(
+                                    () ->
+                                            new UsernameNotFoundException(
+                                                    "Student profile not found"
+                                            )
+                            );
 
-            stsId = profile.getId().toString();
+            stsId =
+                    profile.getId().toString();
         }
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        String token =
+                jwtUtil.generateToken(
+                        user.getEmail(),
+                        user.getRole()
+                );
 
-        return new AuthResult(token, user.getRole(), stsId);
+        return new AuthResult(
+                token,
+                user.getRole(),
+                stsId
+        );
+    }
+
+    /**
+     * Revoke only the JWT belonging to the current browser session.
+     */
+    public void logout(String token) {
+
+        jwtRevocationService.revoke(token);
     }
 }

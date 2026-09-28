@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
+
 
 function SunIcon() {
   return (
@@ -30,6 +33,7 @@ function SunIcon() {
   )
 }
 
+
 function MoonIcon() {
   return (
     <svg
@@ -50,16 +54,72 @@ function MoonIcon() {
   )
 }
 
-function Navbar() {
-  const { theme, toggleTheme } = useTheme()
 
-  const isLightTheme = theme === 'placeintel'
+function Navbar() {
+
+  const { theme, toggleTheme } =
+    useTheme()
+
+  const { logout } =
+    useAuth()
+
+  const isLightTheme =
+    theme === 'placeintel'
+
+  const [loggingOut, setLoggingOut] =
+    useState(false)
+
+
+  async function handleLogout() {
+
+    if (loggingOut) {
+      return
+    }
+
+    setLoggingOut(true)
+
+    try {
+
+      await logout()
+
+      /*
+       * AuthContext has already cleared:
+       *
+       * - React auth state
+       * - localStorage user
+       *
+       * Backend has already:
+       *
+       * - revoked the JWT
+       * - expired the jwt cookie
+       */
+      window.location.replace('/login')
+
+    } catch (error) {
+
+      console.error(
+        'Logout failed:',
+        error
+      )
+
+      window.alert(
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        'Logout failed. Please try again.'
+      )
+
+      setLoggingOut(false)
+    }
+  }
+
 
   return (
     <div className="navbar bg-base-100 border-b border-base-300 px-6">
-      
+
       {/* Left side */}
+
       <div className="flex-1 flex items-center gap-6">
+
         <Link
           to="/companies"
           className="text-xl font-bold text-primary"
@@ -67,7 +127,9 @@ function Navbar() {
           PlaceIntel
         </Link>
 
+
         <div className="hidden sm:flex items-center gap-1">
+
           <Link
             to="/companies"
             className="btn btn-ghost btn-sm"
@@ -81,13 +143,18 @@ function Navbar() {
           >
             Drives
           </Link>
+
         </div>
+
       </div>
 
+
       {/* Right side */}
+
       <div className="flex-none flex items-center gap-2">
 
         {/* Theme Toggle */}
+
         <button
           type="button"
           onClick={toggleTheme}
@@ -121,6 +188,7 @@ function Navbar() {
         >
 
           {/* Track icons */}
+
           <span
             className="
               absolute
@@ -132,6 +200,7 @@ function Navbar() {
               pointer-events-none
             "
           >
+
             <span className="flex items-center justify-center w-6 h-6">
               <SunIcon />
             </span>
@@ -139,9 +208,12 @@ function Navbar() {
             <span className="flex items-center justify-center w-6 h-6">
               <MoonIcon />
             </span>
+
           </span>
 
+
           {/* Sliding black knob */}
+
           <span
             className={`
               absolute
@@ -166,26 +238,34 @@ function Navbar() {
               }
             `}
           >
+
             {isLightTheme ? (
               <SunIcon />
             ) : (
               <MoonIcon />
             )}
+
           </span>
 
         </button>
 
+
         {/* Profile Dropdown */}
+
         <div className="dropdown dropdown-end">
+
           <div
             tabIndex={0}
             role="button"
             className="btn btn-ghost btn-circle avatar placeholder"
           >
+
             <div className="bg-neutral text-neutral-content rounded-full w-10">
               <span>S</span>
             </div>
+
           </div>
+
 
           <ul
             tabIndex={0}
@@ -201,23 +281,47 @@ function Navbar() {
               shadow
             "
           >
+
             <li>
+
               <Link to="/profile">
                 My Profile
               </Link>
+
             </li>
 
+
             <li>
-              <a onClick={() => alert('logout wiring next')}>
-                Logout
-              </a>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="w-full text-left"
+              >
+
+                {loggingOut ? (
+                  <>
+                    <span className="loading loading-spinner loading-xs" />
+                    Logging out...
+                  </>
+                ) : (
+                  'Logout'
+                )}
+
+              </button>
+
             </li>
+
           </ul>
+
         </div>
 
       </div>
+
     </div>
   )
 }
+
 
 export default Navbar
