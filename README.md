@@ -9,7 +9,6 @@
 ## Live Demo
 
 - **App:** `<add deployed frontend link>`
-- **Repo:** `<add GitHub link>`
 
 *(Free-tier hosting spins down when idle — the first request may take 30–50 seconds.)*
 
