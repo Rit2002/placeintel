@@ -20,7 +20,9 @@ INTERNAL_API_KEY = os.getenv("SPRING_INTERNAL_API_KEY")
 # SPRING BOOT
 # ============================================================
 
-SPRING_BOOT_BASE_URL = "http://localhost:8080/placeintel/api/v1"
+SPRING_BOOT_BASE_URL = os.getenv(
+    "SPRING_BOOT_BASE_URL"
+)
 
 
 # ============================================================
