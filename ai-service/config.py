@@ -32,16 +32,29 @@ MODEL_NAME = "openai/gpt-oss-120b"
 
 def get_llm():
     """
-    Create the Groq LLM used by the agents.
-
-    max_tokens is deliberately limited so that we don't
-    unnecessarily reserve a huge completion budget on Groq.
+    General-purpose Groq LLM used by agents.
     """
-
     return ChatGroq(
         model=MODEL_NAME,
         groq_api_key=GROQ_API_KEY,
         temperature=0.2,
-        max_tokens=1500,
+        max_tokens=2500,
         streaming=True,
+    )
+
+
+
+
+def get_structured_llm():
+    """
+    LLM used for structured JSON-schema generation.
+    Needs a larger completion budget because the response
+    contains multiple nested objects/lists.
+    """
+    return ChatGroq(
+        model=MODEL_NAME,
+        groq_api_key=GROQ_API_KEY,
+        temperature=0.1,
+        max_tokens=1800,
+        streaming=False,
     )

@@ -5,7 +5,10 @@ from langchain_core.messages import (
     ToolMessage,
 )
 
-from config import get_llm
+from config import (
+    get_llm,
+    get_structured_llm,
+)
 from state import AgentState
 
 from tools import (
@@ -88,7 +91,7 @@ research_llm_with_tools = get_llm().bind_tools(
     research_tools
 )
 
-research_llm_structured = get_llm().with_structured_output(
+research_llm_structured = get_structured_llm().with_structured_output(
     CompanyResearchResponse,
     method="json_schema",
     strict=True,
@@ -199,7 +202,7 @@ def extract_research_text(
     #
     # --------------------------------------------------------
 
-    MAX_RESEARCH_CHARS = 7000
+    MAX_RESEARCH_CHARS = 5000
 
     if len(research_text) > MAX_RESEARCH_CHARS:
 

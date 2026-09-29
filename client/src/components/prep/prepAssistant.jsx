@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
 
 import { streamPrepMessage } from '../../api/companyApi'
 
@@ -9,6 +10,24 @@ import {
     savePrepChat,
     clearPrepChat
 } from '../../utils/prepStorage'
+
+
+// ==================================================
+// MARKDOWN NORMALIZATION
+// ==================================================
+
+function normalizeMarkdownContent(content) {
+    if (typeof content !== 'string') {
+        return content
+    }
+
+    // Support older saved messages that used the previous
+    // placeholder instead of real Markdown/HTML line breaks.
+    return content.replace(
+        /_+PREP_ASSISTANT_BREAK_+_/gi,
+        '<br />'
+    )
+}
 
 
 // ==================================================
@@ -47,9 +66,14 @@ function errorMessageFor(err) {
 // ==================================================
 
 function MarkdownContent({ content }) {
+
+    const normalizedContent =
+        normalizeMarkdownContent(content)
+
     return (
         <ReactMarkdown
             remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
             components={{
 
                 // ------------------------------------------
@@ -296,7 +320,7 @@ function MarkdownContent({ content }) {
                 ),
             }}
         >
-            {content}
+            {normalizedContent}
         </ReactMarkdown>
     )
 }
@@ -738,7 +762,8 @@ function PrepAssistant({ companyId, companyName }) {
                 className="
                     w-full
                     max-w-5xl
-                    h-[78vh]
+                    h-[90vh]
+                    max-h-[calc(100vh-2rem)]
                     bg-base-100
                     rounded-3xl
                     shadow-2xl
