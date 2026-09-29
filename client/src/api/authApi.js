@@ -1,42 +1,29 @@
-import axiosClient from './axiosClient'
-
+import axiosClient from "./axiosClient";
 
 export async function login(email, password) {
+  const response = await axiosClient.post("/auth/login", {
+    email,
+    password,
+  });
 
-    const response =
-        await axiosClient.post(
-            '/auth/login',
-            {
-                email,
-                password
-            }
-        )
-
-    return response.data
+  return response.data;
 }
 
-
 export async function register(
+  fullName,
+  email,
+  password,
+  enrollmentNo
+) {
+  const response = await axiosClient.post("/auth/register", {
     fullName,
     email,
     password,
-    enrollmentNo
-) {
+    enrollmentNo,
+  });
 
-    const response =
-        await axiosClient.post(
-            '/auth/register',
-            {
-                fullName,
-                email,
-                password,
-                enrollmentNo
-            }
-        )
-
-    return response.data
+  return response.data;
 }
-
 
 /**
  * Logs out the current browser session.
@@ -46,11 +33,7 @@ export async function register(
  * the JWT server-side.
  */
 export async function logout() {
+  const response = await axiosClient.post("/auth/logout");
 
-    const response =
-        await axiosClient.post(
-            '/auth/logout'
-        )
-
-    return response.data
+  return response.data;
 }

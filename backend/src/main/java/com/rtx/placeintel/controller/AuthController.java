@@ -1,6 +1,10 @@
 package com.rtx.placeintel.controller;
 
-import com.rtx.placeintel.dto.*;
+import com.rtx.placeintel.dto.ApiResponse;
+import com.rtx.placeintel.dto.AuthResponse;
+import com.rtx.placeintel.dto.AuthResult;
+import com.rtx.placeintel.dto.LoginRequest;
+import com.rtx.placeintel.dto.RegisterRequest;
 import com.rtx.placeintel.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +28,7 @@ public class AuthController {
     private static final String COOKIE_NAME = "jwt";
 
     private final AuthService authService;
+
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(
@@ -58,6 +63,7 @@ public class AuthController {
                 );
     }
 
+
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
             @Valid @RequestBody LoginRequest request
@@ -91,12 +97,13 @@ public class AuthController {
                 );
     }
 
+
     /**
      * Logs out only the current JWT session.
      *
-     * 1. The JWT is read from the HttpOnly cookie.
-     * 2. The exact JWT is revoked in Redis through its JTI.
-     * 3. The browser cookie is expired.
+     * 1. Reads JWT from the HttpOnly cookie.
+     * 2. Revokes that JWT server-side.
+     * 3. Expires the browser cookie.
      */
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
@@ -108,18 +115,13 @@ public class AuthController {
     ) {
 
         /*
-         * Important:
-         *
-         * Do this FIRST.
-         *
-         * If Redis is unavailable and revocation fails,
-         * we do not pretend the logout succeeded.
-         *
-         * Therefore the browser cookie is not cleared until
-         * the server has successfully processed the revocation.
+         * Revoke the current JWT first.
          */
         authService.logout(token);
 
+        /*
+         * Expire the browser cookie.
+         */
         ResponseCookie expiredCookie =
                 clearAuthCookie();
 
@@ -139,6 +141,15 @@ public class AuthController {
                 );
     }
 
+
+    /**
+     * Creates the authentication cookie.
+     *
+     * SameSite=None is required because the frontend
+     * and backend are on different origins.
+     *
+     * Secure=true is required when SameSite=None is used.
+     */
     private ResponseCookie createAuthCookie(
             String token
     ) {
@@ -149,13 +160,20 @@ public class AuthController {
                         token
                 )
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(true)
+                .sameSite("None")
                 .path("/")
                 .maxAge(Duration.ofDays(30))
                 .build();
     }
 
+
+    /**
+     * Clears the authentication cookie.
+     *
+     * The attributes match the original authentication
+     * cookie so the browser removes the correct cookie.
+     */
     private ResponseCookie clearAuthCookie() {
 
         return ResponseCookie
@@ -164,8 +182,8 @@ public class AuthController {
                         ""
                 )
                 .httpOnly(true)
-                .secure(false)
-                .sameSite("Lax")
+                .secure(true)
+                .sameSite("None")
                 .path("/")
                 .maxAge(Duration.ZERO)
                 .build();

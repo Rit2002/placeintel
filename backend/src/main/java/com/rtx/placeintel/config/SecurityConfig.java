@@ -25,18 +25,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-/*
-* Tells Spring: this class defines beans — don't just treat it as a regular class, scan it for @Bean methods and register their return values in the application context
-* */
 @Configuration
-/*
-* Spring starts wrapping every HTTP request through a chain of security filters before it reaches your controller.
-* It tells Spring:"Use my SecurityConfig class as the application's security configuration."
- */
 @EnableWebSecurity
-/*
-* This lets you put security rules directly on methods elsewhere in your code — things like @PreAuthorize("hasRole('ADMIN')") on a service or controller method
-* */
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -45,87 +35,157 @@ public class SecurityConfig {
     private final UserDetailsService userDetailsService;
     private final VerificationGateFilter verificationGateFilter;
 
+
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) {
-        /*
-        * Think of it as a manager.
-        * It simply asks: "Which authentication provider should handle this request?"
-        * Like : LDAP, Google OAuth, JWT, Database, DaoAuthenticationProvider
-        * */
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration
+    ) {
         return configuration.getAuthenticationManager();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        /*
-        * 1) DaoAuthenticationProvider : It is a class provided by Spring Security.It implements the AuthenticationProvider interface.
-        * Its job is: Authenticate a user using data stored in a database.
-        * 2) "DAO" stands for Data Access Object.
-        * 3) userDetailsService : Internally Dao call the userDetailsService.loadUserByUsername("riteshchavan@gmail.com")
-        * to fetch the data from DB to authenticate so userDetailsService is passed to Dao
-        * */
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
 
-        /*
-        * This line is configuring the DaoAuthenticationProvider by telling it which algorithm to use when verifying passwords.
-        * After setting "setPasswordEncoder" method "Dao" know how to compare passwords.
-        * */
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider(userDetailsService);
+
         provider.setPasswordEncoder(passwordEncoder());
 
         return provider;
     }
 
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http
+    ) {
+
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/placeintel/api/v1/auth/**",
-                                "/placeintel/api/v1/internal/**"
-                        ).permitAll()
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/placeintel/api/v1/achievements"
-                        ).permitAll()
-                        .anyRequest().authenticated()
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
                 )
-                .authenticationProvider(authenticationProvider())
-                /* UsernamePasswordAuthenticationFilter is Spring's default filter for form-login-style authentication
-                * addFilterBefore inserts your jwtAuthFilter to run before it
-                * */
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                 // Runs verificationGateFilter immediately after JwtAuthFilter in the security filter chain.
-                .addFilterAfter(verificationGateFilter, JwtAuthFilter.class);
+
+                .csrf(AbstractHttpConfigurer::disable)
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
+
+                .authorizeHttpRequests(auth ->
+                        auth
+
+                                // Public authentication endpoints
+                                .requestMatchers(
+                                        "/placeintel/api/v1/auth/**"
+                                )
+                                .permitAll()
+
+                                // Internal endpoints
+                                .requestMatchers(
+                                        "/placeintel/api/v1/internal/**"
+                                )
+                                .permitAll()
+
+                                // Public achievements endpoint
+                                .requestMatchers(
+                                        HttpMethod.GET,
+                                        "/placeintel/api/v1/achievements"
+                                )
+                                .permitAll()
+
+                                // Everything else requires authentication
+                                .anyRequest()
+                                .authenticated()
+                )
+
+                .authenticationProvider(
+                        authenticationProvider()
+                )
+
+                /*
+                 * Read JWT from HttpOnly cookie
+                 * before Spring's username/password filter.
+                 */
+                .addFilterBefore(
+                        jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
+
+                /*
+                 * Student verification gate.
+                 */
+                .addFilterAfter(
+                        verificationGateFilter,
+                        JwtAuthFilter.class
+                );
 
         return http.build();
     }
 
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        // Defining CORS Rules
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        CorsConfiguration configuration =
+                new CorsConfiguration();
 
         /*
-        * 1) UrlBasedCorsConfigurationSource is a Spring class that stores CORS configurations based on URL patterns.
-        *
-        * 2) registerCorsConfiguration("/**", configuration) : For every URL uses this CORS configuration
-        * */
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+         * During development:
+         * http://localhost:5173
+         *
+         * After deploying frontend:
+         * Replace/add your actual Render frontend URL.
+         *
+         * Example:
+         * https://placeintel-frontend.onrender.com
+         */
+        configuration.setAllowedOrigins(
+                List.of(
+                        "http://localhost:5173",
+                        "https://placeintel-client.onrender.com"
+                )
+        );
+
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "PATCH",
+                        "DELETE",
+                        "OPTIONS"
+                )
+        );
+
+        configuration.setAllowedHeaders(
+                List.of("*")
+        );
+
+        /*
+         * Required because authentication uses
+         * an HttpOnly JWT cookie.
+         */
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
+
         return source;
     }
 }
